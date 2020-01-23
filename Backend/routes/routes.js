@@ -28,17 +28,20 @@ router.get("/davivienda-get-reports", async (req, res) => {
   console.log("[started]");
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
-
+  /* ----------------------------------- getting page ----------------------------------- */
   console.log("[getting page]");
   await page.goto("https://www.davivienda.com/wps/portal/personas/nuevo");
 
+  /* ----------------------------------- clicking Login ----------------------------------- */
   console.log("[clicking Login]");
   await page.click("#personas-ingresar");
 
+  /* ----------------------------------- waiting for iframe ----------------------------------- */
   console.log("[waiting for iframe]");
-  await page.waitFor(5000);
-
+  await frameContent.waitForSelector("div#divIFrame iframe");
   const elementHandle = await page.$("div#divIFrame iframe");
+
+  /* ----------------------------------- iFrame Loaded ----------------------------------- */
   console.log("[*** iFrame Loaded ***]");
   const frameContent = await elementHandle.contentFrame();
   if ((await page.$("#closeButton")) !== null) {
@@ -46,11 +49,12 @@ router.get("/davivienda-get-reports", async (req, res) => {
     await page.click("#closeButton");
   }
 
-  console.log("[--- Filling Document # ---]");
-  console.log("[ - focusing on input - ]");
+  /* ----------------------------------- Filling Document # ----------------------------------- */
+  console.log("[--- Filling Document number & focusing on input ---]");
   await frameContent.waitForSelector("#formAutenticar\\:numeroDocumento");
   await frameContent.focus("#formAutenticar\\:numeroDocumento");
 
+  /* ----------------------------------- Filling out input ----------------------------------- */
   console.log("[ - filling out input - ]");
   await frameContent.$eval(
     "#formAutenticar\\:numeroDocumento",
@@ -58,6 +62,7 @@ router.get("/davivienda-get-reports", async (req, res) => {
     id
   );
 
+  /* ----------------------------------- continue to password ----------------------------------- */
   console.log("[ - continue to password - ]");
   await frameContent.click("#formAutenticar\\:btnSubmitCont");
   if ((await page.$("#closeButton")) !== null) {
@@ -65,6 +70,7 @@ router.get("/davivienda-get-reports", async (req, res) => {
     await page.click("#closeButton");
   }
 
+  /* ----------------------------------- PASSWORD INPUT ----------------------------------- */
   console.log("[ --- PASSWORD INPUT --- ]");
   await frameContent.waitForSelector("#formAutenticar\\:claveVirtual");
   await page.keyboard.type(password.toString(), { delay: 100 });
@@ -78,6 +84,7 @@ router.get("/davivienda-get-reports", async (req, res) => {
     await page.click("#closeButton");
   }
 
+  /* ----------------------------------- SUBMITING PASSWORD ----------------------------------- */
   console.log("!!! SUBMITING PASSWORD !!!");
   await frameContent.click("#formAutenticar\\:btnSubmitCont");
 
@@ -92,6 +99,8 @@ router.get("/davivienda-get-reports", async (req, res) => {
     console.log("[! closing pop up !]");
     await page.click("#closeButton");
   }
+
+  /* ----------------------------------- PREVENTIVE screenshot & content ----------------------------------- */
   console.log("[ PREVENTIVE screenshot & content]");
 
   let pageContent = await page.content();
@@ -102,8 +111,10 @@ router.get("/davivienda-get-reports", async (req, res) => {
 
   await page.screenshot({ path: "temp/screenshotPreventive.png" });
 
+  /* ----------------------------------- checking for errors ----------------------------------- */
   console.log("[ --- checking for errors ---]");
-  let data = [], content;
+  let data = [],
+    content;
   if ((await frameContent.$("#divMessageCodigo")) !== null) {
     data = await frameContent.evaluate(() => {
       const tds = Array.from(
@@ -114,6 +125,7 @@ router.get("/davivienda-get-reports", async (req, res) => {
     content = await frameContent.content();
   }
 
+  /* ----------------------------------- closing ----------------------------------- */
   console.log("[closing]");
   pageContent = await page.content();
   console.log("[taking screenshot]");
