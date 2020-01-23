@@ -116,6 +116,7 @@ router.get("/davivienda-get-reports", async (req, res) => {
   let data = [],
     content;
   if ((await frameContent.$("#divMessageCodigo")) !== null) {
+    console.log('[! ERROR PRESENT !]');
     data = await frameContent.evaluate(() => {
       const tds = Array.from(
         document.querySelectorAll(".tablaMessage tbody tr td")
@@ -124,6 +125,10 @@ router.get("/davivienda-get-reports", async (req, res) => {
     });
     content = await frameContent.content();
   }
+
+  /* ----------------------------------- Waiting on redirect ----------------------------------- */
+  console.log('[... Waiting on redirect ... ]');
+  await page.waitForNavigation({'waitUntil':'domcontentloaded'})
 
   /* ----------------------------------- closing ----------------------------------- */
   console.log("[closing]");
