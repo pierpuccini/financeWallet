@@ -38,7 +38,7 @@ router.get("/davivienda-get-reports", async (req, res) => {
 
   /* ----------------------------------- waiting for iframe ----------------------------------- */
   console.log("[waiting for iframe]");
-  await frameContent.waitForSelector("div#divIFrame iframe");
+  await page.waitForSelector("div#divIFrame iframe");
   const elementHandle = await page.$("div#divIFrame iframe");
 
   /* ----------------------------------- iFrame Loaded ----------------------------------- */
