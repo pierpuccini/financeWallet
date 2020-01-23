@@ -29,7 +29,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-app.use("/text", routes);
+app.use("/api", routes);
 
 app.listen(PORT, () => console.log("server started"));
 
