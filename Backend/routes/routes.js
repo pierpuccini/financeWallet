@@ -10,6 +10,10 @@ const router = express.Router();
 const path = require("path");
 const puppeteer = require("puppeteer");
 const fs = require("fs");
+const cred = require("../../credentials.json");
+
+console.log(cred);
+const parsedCred = cred
 
 // Get Message
 router.post("/text", (req, res) => {
@@ -38,7 +42,7 @@ router.get("/davivienda-get-reports", async (req, res) => {
 
   const elementHandle = await page.$("div#divIFrame iframe");
   console.log("[*** iFrame Loaded ***]");
-  const frame = await elementHandle.contentFrame();
+  const frameContent = await elementHandle.contentFrame();
   if ((await page.$("#closeButton")) !== null) {
     console.log("[! closing pop up !]");
     await page.click("#closeButton");
@@ -46,45 +50,79 @@ router.get("/davivienda-get-reports", async (req, res) => {
 
   console.log("[--- Filling Document # ---]");
   console.log("[ - focusing on input - ]");
-  await frame.focus("#formAutenticar\\:numeroDocumento");
-  await frame.waitFor(500);
+  await frameContent.waitForSelector("#formAutenticar\\:numeroDocumento");
+  await frameContent.focus("#formAutenticar\\:numeroDocumento");
 
   console.log("[ - filling out input - ]");
-  await frame.$eval(
+  await frameContent.$eval(
     "#formAutenticar\\:numeroDocumento",
-    el => (el.value = "0000")
+    el => (el.value = parsedCred.id)
   );
-  await frame.waitFor(500);
 
   console.log("[ - continue to password - ]");
-  await frame.click("#formAutenticar\\:btnSubmitCont");
+  await frameContent.click("#formAutenticar\\:btnSubmitCont");
   if ((await page.$("#closeButton")) !== null) {
     console.log("[! closing pop up !]");
     await page.click("#closeButton");
   }
-  await frame.waitFor(500);
 
   console.log("[ --- PASSWORD INPUT --- ]");
-  await frame.$eval(
+  await frameContent.waitForSelector("#formAutenticar\\:claveVirtual");
+  await page.keyboard.type(parsedCred.password, { delay: 100 });
+  await frameContent.$eval(
     "#formAutenticar\\:claveVirtual",
-    el => (el.value = "0000")
+    el => (el.value = parsedCred.password)
   );
   if ((await page.$("#closeButton")) !== null) {
     console.log("[! closing pop up !]");
     await page.click("#closeButton");
   }
-  await frame.waitFor(500);
 
   console.log("!!! SUBMITING PASSWORD !!!");
-  await frame.click("#formAutenticar\\:btnSubmitCont");
+  await frameContent.click("#formAutenticar\\:btnSubmitCont");
+
   if ((await page.$("#closeButton")) !== null) {
     console.log("[! closing pop up !]");
     await page.click("#closeButton");
   }
-  await frame.waitFor(5000);
+  await frameContent.waitFor(15000);
+
+  if ((await page.$("#closeButton")) !== null) {
+    console.log("[! closing pop up !]");
+    await page.click("#closeButton");
+  }
+  console.log("[ PREVENTIVE screenshot & content]");
+
+  let content = await frameContent.content();
+  fs.writeFile("temp/content.html", content, "utf8", err => {
+    if (err) throw err;
+    console.log("The file has been saved!");
+  });
+
+  let pageContent = await page.content();
+  fs.writeFile("temp/pageContent.html", pageContent, "utf8", err => {
+    if (err) throw err;
+    console.log("The file has been saved!");
+  });
+
+  await page.screenshot({ path: "temp/screenshotPreventive.png" });
+
+  console.log("[ --- checking for errors ---]");
+  let data = [];
+  if ((await frameContent.$("#divMessageCodigo")) !== null) {
+    data = await frameContent.evaluate(() => {
+      const tds = Array.from(
+        document.querySelectorAll(".tablaMessage tbody tr td")
+      );
+      return tds.map(td => td.textContent);
+    });
+    console.log(data);
+  }
 
   console.log("[closing]");
-  var content = await frame.content();
+
+  content = await frameContent.content();
+  pageContent = await page.content();
   console.log("[taking screenshot]");
   await page.screenshot({ path: "temp/screenshot.png" });
   await browser.close();
@@ -94,7 +132,16 @@ router.get("/davivienda-get-reports", async (req, res) => {
     console.log("The file has been saved!");
   });
 
-  res.sendFile(path.resolve("temp/screenshot.png"));
+  fs.writeFile("temp/pageContent.html", pageContent, "utf8", err => {
+    if (err) throw err;
+    console.log("The file has been saved!");
+  });
+
+  if (data.length > 0) {
+    res.send(data[1]);
+  } else {
+    res.sendFile(path.resolve("temp/screenshot.png"));
+  }
 });
 
 module.exports = router;
