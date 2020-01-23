@@ -10,10 +10,7 @@ const router = express.Router();
 const path = require("path");
 const puppeteer = require("puppeteer");
 const fs = require("fs");
-const cred = require("../../credentials.json");
-
-console.log(cred);
-const parsedCred = cred
+const credentials = require("../../credentials.json");
 
 // Get Message
 router.post("/text", (req, res) => {
@@ -27,6 +24,7 @@ router.get("/davivienda-get-reports", async (req, res) => {
   //   console.log("[! closing pop up !]");
   //   await page.click("#closeButton");
   // }
+  const { id, password } = credentials;
   console.log("[started]");
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
@@ -56,7 +54,8 @@ router.get("/davivienda-get-reports", async (req, res) => {
   console.log("[ - filling out input - ]");
   await frameContent.$eval(
     "#formAutenticar\\:numeroDocumento",
-    el => (el.value = parsedCred.id)
+    (el, value) => (el.value = value),
+    id
   );
 
   console.log("[ - continue to password - ]");
@@ -68,10 +67,11 @@ router.get("/davivienda-get-reports", async (req, res) => {
 
   console.log("[ --- PASSWORD INPUT --- ]");
   await frameContent.waitForSelector("#formAutenticar\\:claveVirtual");
-  await page.keyboard.type(parsedCred.password, { delay: 100 });
+  await page.keyboard.type(password.toString(), { delay: 100 });
   await frameContent.$eval(
     "#formAutenticar\\:claveVirtual",
-    el => (el.value = parsedCred.password)
+    (el, value) => (el.value = value),
+    password
   );
   if ((await page.$("#closeButton")) !== null) {
     console.log("[! closing pop up !]");
@@ -85,6 +85,7 @@ router.get("/davivienda-get-reports", async (req, res) => {
     console.log("[! closing pop up !]");
     await page.click("#closeButton");
   }
+
   await frameContent.waitFor(15000);
 
   if ((await page.$("#closeButton")) !== null) {
@@ -93,11 +94,11 @@ router.get("/davivienda-get-reports", async (req, res) => {
   }
   console.log("[ PREVENTIVE screenshot & content]");
 
-  let content = await frameContent.content();
-  fs.writeFile("temp/content.html", content, "utf8", err => {
-    if (err) throw err;
-    console.log("The file has been saved!");
-  });
+  // let content = await frameContent.content();
+  // fs.writeFile("temp/content.html", content, "utf8", err => {
+  //   if (err) throw err;
+  //   console.log("The file has been saved!");
+  // });
 
   let pageContent = await page.content();
   fs.writeFile("temp/pageContent.html", pageContent, "utf8", err => {
@@ -108,7 +109,7 @@ router.get("/davivienda-get-reports", async (req, res) => {
   await page.screenshot({ path: "temp/screenshotPreventive.png" });
 
   console.log("[ --- checking for errors ---]");
-  let data = [];
+  let data = [], content;
   if ((await frameContent.$("#divMessageCodigo")) !== null) {
     data = await frameContent.evaluate(() => {
       const tds = Array.from(
@@ -116,12 +117,11 @@ router.get("/davivienda-get-reports", async (req, res) => {
       );
       return tds.map(td => td.textContent);
     });
-    console.log(data);
+    content = await frameContent.content();
   }
 
   console.log("[closing]");
 
-  content = await frameContent.content();
   pageContent = await page.content();
   console.log("[taking screenshot]");
   await page.screenshot({ path: "temp/screenshot.png" });
