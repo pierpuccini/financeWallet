@@ -94,12 +94,6 @@ router.get("/davivienda-get-reports", async (req, res) => {
   }
   console.log("[ PREVENTIVE screenshot & content]");
 
-  // let content = await frameContent.content();
-  // fs.writeFile("temp/content.html", content, "utf8", err => {
-  //   if (err) throw err;
-  //   console.log("The file has been saved!");
-  // });
-
   let pageContent = await page.content();
   fs.writeFile("temp/pageContent.html", pageContent, "utf8", err => {
     if (err) throw err;
@@ -121,7 +115,6 @@ router.get("/davivienda-get-reports", async (req, res) => {
   }
 
   console.log("[closing]");
-
   pageContent = await page.content();
   console.log("[taking screenshot]");
   await page.screenshot({ path: "temp/screenshot.png" });
