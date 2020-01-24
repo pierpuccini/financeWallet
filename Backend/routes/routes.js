@@ -112,7 +112,7 @@ router.get("/davivienda-get-reports", async (req, res) => {
 
   await page.screenshot({ path: "temp/screenshotPreventive.png" });
 
-  /* ----------------------------------- checking for errors & Waiting on redirect ----------------------------------- */
+  /* ----------------------------------- checking for error ----------------------------------- */
   console.log("[ --- checking for errors ---]");
   let data = [],
     content;
@@ -127,9 +127,6 @@ router.get("/davivienda-get-reports", async (req, res) => {
         });
         content = await frameContent.content();
       }
-    } else {
-      console.log('[... Waiting on redirect ]');
-      await page.waitForNavigation({'waitUntil':'domcontentloaded'})
     }
 
   /* ----------------------------------- closing ----------------------------------- */
