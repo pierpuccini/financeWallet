@@ -94,6 +94,7 @@ router.get("/davivienda-get-reports", async (req, res) => {
   }
 
   await frameContent.waitFor(15000);
+  console.log('... waited 15000 ms');
 
   if ((await page.$("#closeButton")) !== null) {
     console.log("[! closing pop up !]");
@@ -111,24 +112,25 @@ router.get("/davivienda-get-reports", async (req, res) => {
 
   await page.screenshot({ path: "temp/screenshotPreventive.png" });
 
-  /* ----------------------------------- checking for errors ----------------------------------- */
+  /* ----------------------------------- checking for errors & Waiting on redirect ----------------------------------- */
   console.log("[ --- checking for errors ---]");
   let data = [],
     content;
-  if ((await frameContent.$("#divMessageCodigo")) !== null) {
-    console.log('[! ERROR PRESENT !]');
-    data = await frameContent.evaluate(() => {
-      const tds = Array.from(
-        document.querySelectorAll(".tablaMessage tbody tr td")
-      );
-      return tds.map(td => td.textContent);
-    });
-    content = await frameContent.content();
-  }
-
-  /* ----------------------------------- Waiting on redirect ----------------------------------- */
-  console.log('[... Waiting on redirect ... ]');
-  await page.waitForNavigation({'waitUntil':'domcontentloaded'})
+    if (!frameContent.isDetached()) {
+      if ((await frameContent.$("#divMessageCodigo")) !== null) {
+        console.log('[! ERROR PRESENT !]');
+        data = await frameContent.evaluate(() => {
+          const tds = Array.from(
+            document.querySelectorAll(".tablaMessage tbody tr td")
+          );
+          return tds.map(td => td.textContent);
+        });
+        content = await frameContent.content();
+      }
+    } else {
+      console.log('[... Waiting on redirect ]');
+      await page.waitForNavigation({'waitUntil':'domcontentloaded'})
+    }
 
   /* ----------------------------------- closing ----------------------------------- */
   console.log("[closing]");
