@@ -22,3 +22,19 @@ describe("Message API Tests", function() {
     });
   });
 });
+
+describe("Bank API Tests", function() {
+  describe("#GET / davivienda-get-reports", function() {
+    it("should recieve message", function(done) {
+      request(app)
+        .get("/davivienda-get-reports")
+        .set("Accept", "application/json")
+        .expect("Content-Type", /json/)
+        .end(function(err, res) {
+          expect(res.statusCode).to.equal(200);
+          expect(res.body.message).to.be.an("string");
+          done();
+        });
+    });
+  });
+});
