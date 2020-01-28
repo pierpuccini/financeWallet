@@ -141,17 +141,17 @@ router.get("/davivienda-get-reports", async (req, res) => {
 
   fs.writeFile("temp/content.html", content, "utf8", err => {
     if (err) throw err;
-    console.log("content has been saved!");
+    console.log("---- content has been saved!");
   });
 
   fs.writeFile("temp/pageContent.html", pageContent, "utf8", err => {
     if (err) throw err;
-    console.log("pageContent has been saved!");
+    console.log("---- pageContent has been saved!");
   });
 
   console.log("[Sending data to postman or api caller]");
   if (data.length > 0) {
-    res.send(data[1]);
+    res.send({ code: 'already-logged-in',message: data[1]});
   } else {
     res.sendFile(path.resolve("temp/screenshot.png"));
   }
