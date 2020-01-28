@@ -20,10 +20,6 @@ router.post("/text", (req, res) => {
 });
 
 router.get("/davivienda-get-reports", async (req, res) => {
-  // if ((await page.$("#closeButton")) !== null) {
-  //   console.log("[! closing pop up !]");
-  //   await page.click("#closeButton");
-  // }
   const { id, password } = credentials;
   console.log("[started]");
   const browser = await puppeteer.launch();
@@ -94,7 +90,7 @@ router.get("/davivienda-get-reports", async (req, res) => {
   }
 
   await frameContent.waitFor(15000);
-  console.log('... waited 15000 ms');
+  console.log("... waited 15000 ms");
 
   if ((await page.$("#closeButton")) !== null) {
     console.log("[! closing pop up !]");
@@ -116,36 +112,44 @@ router.get("/davivienda-get-reports", async (req, res) => {
   console.log("[ --- checking for errors ---]");
   let data = [],
     content;
-    if (!frameContent.isDetached()) {
-      if ((await frameContent.$("#divMessageCodigo")) !== null) {
-        console.log('[! ERROR PRESENT !]');
-        data = await frameContent.evaluate(() => {
-          const tds = Array.from(
-            document.querySelectorAll(".tablaMessage tbody tr td")
-          );
-          return tds.map(td => td.textContent);
-        });
-        content = await frameContent.content();
-      }
+  if (!frameContent.isDetached()) {
+    if ((await frameContent.$("#divMessageCodigo")) !== null) {
+      console.log("[! ERROR PRESENT !]");
+      data = await frameContent.evaluate(() => {
+        const tds = Array.from(
+          document.querySelectorAll(".tablaMessage tbody tr td")
+        );
+        return tds.map(td => td.textContent);
+      });
+      content = await frameContent.content();
     }
+  }
 
-  /* ----------------------------------- closing ----------------------------------- */
+  /* ----------------------------------- taking screenshot and grabing content ----------------------------------- */
   console.log("[closing]");
   pageContent = await page.content();
-  console.log("[taking screenshot]");
+  console.log("[taking screenshot content screenshot]");
   await page.screenshot({ path: "temp/screenshot.png" });
+
+  /* ----------------------------------- loging out and closing browser ----------------------------------- */
+  if (data.length === 0) {
+    await page.click("#dashboardform\\:cerrarSesion");
+    await page.waitForSelector("#personas-ingresar");
+    await page.screenshot({ path: "temp/logoutScreenshot.png" });
+  }
   await browser.close();
 
   fs.writeFile("temp/content.html", content, "utf8", err => {
     if (err) throw err;
-    console.log("The file has been saved!");
+    console.log("content has been saved!");
   });
 
   fs.writeFile("temp/pageContent.html", pageContent, "utf8", err => {
     if (err) throw err;
-    console.log("The file has been saved!");
+    console.log("pageContent has been saved!");
   });
 
+  console.log("[Sending data to postman or api caller]");
   if (data.length > 0) {
     res.send(data[1]);
   } else {
