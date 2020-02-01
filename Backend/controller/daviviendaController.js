@@ -2,7 +2,7 @@ const path = require("path");
 const fs = require("fs");
 const puppeteer = require("puppeteer");
 const credentials = require("../../credentials.json");
-const HTMLParser = require('node-html-parser');
+const cheerio = require('cheerio')
 
 const getReports = async (req, res) => {
   const { id, password } = credentials;
@@ -27,10 +27,10 @@ const getReports = async (req, res) => {
     console.log("[! closing pop up !]");
     await page.click("#closeButton");
   }
-
+  
   /* ----------------------------------- Filling Document # ----------------------------------- */
   console.log("[--- Filling Document number & focusing on input ---]");
-  await frameContent.waitForSelector("#formAutenticar\\:numeroDocumento");
+  await frameContent.waitForSelector("#formAutenticar\\:numeroDocumento", {timeout: 120000});
   await frameContent.focus("#formAutenticar\\:numeroDocumento");
 
   /* ----------------------------------- Filling out input ----------------------------------- */
@@ -134,14 +134,21 @@ const getReports = async (req, res) => {
   /* ----------------------------------- grabing basic info from html file  ----------------------------------- */
   console.log('[... getting basic info]');
   // basicInfo()
-  const tds = page.evaluate(()=>{
-    document.querySelectorAll("#dashboardform:pagepanel .content-resumen table tbody tr td a")
-  })
-  fs.writeFileSync("temp/1acc.html", tds, "utf8", err => {
-    if (err) throw err;
-    console.log("---- 1acc has been saved!");
-  });
-  // await page.click("#dashboardform\\:cerrarSesion");
+
+  const $ = cheerio.load(pageContent)
+  let test = $('#dashboardform:pagepanel .content-resumen table tbody tr')
+  console.log('test',test);
+
+  // root.map(async (detailedInfo, i) => {
+  //   const detailedInfoID = detailedInfo.querySelectorAll('td a').id;
+  //   console.log('attributes',detailedInfoID);
+  //   await page.click(detailedInfoID);
+  //   fs.writeFileSync(`temp/${i}acc.hmtl`, page.content(), "utf8", err => {
+  //     if (err) throw err;
+  //     console.log("---- 1acc has been saved!");
+  //   });
+  // })
+
 
   /* ----------------------------------- loging out and closing browser ----------------------------------- */
   if (data.length === 0) {
@@ -161,7 +168,8 @@ const getReports = async (req, res) => {
   } else {
     res.sendFile(path.resolve("temp/daviviendaLoggedInScreenshot.png"));
   }
-  
+
+  console.log('[-- end --]')
 };
 
 const basicInfo = async (req, res) => {
