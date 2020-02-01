@@ -110,6 +110,12 @@ const getReports = async (req, res) => {
         return tds.map(td => td.textContent);
       });
       content = await frameContent.content();
+      await browser.close();
+      console.log("[Sending error to postman or api caller]");
+      if (data.length > 0) {
+        res.send({ code: "already-logged-in", message: data[1] });
+        throw new Error("already-logged-in")
+      }
     }
   }
 
@@ -119,23 +125,35 @@ const getReports = async (req, res) => {
   console.log("[taking daviviendaLoggedInScreenshot]");
   await page.screenshot({ path: "temp/daviviendaLoggedInScreenshot.png" });
 
+  console.log(' --- Writing hmtl file --- ');
+  fs.writeFileSync("temp/daviviendaLoggedIn.html", pageContent, "utf8", err => {
+    if (err) throw err;
+    console.log("---- DaviviendaLoggedIn has been saved!");
+  });
+  
+  /* ----------------------------------- grabing basic info from html file  ----------------------------------- */
+  console.log('[... getting basic info]');
+  // basicInfo()
+  const tds = page.evaluate(()=>{
+    document.querySelectorAll("#dashboardform:pagepanel .content-resumen table tbody tr td a")
+  })
+  fs.writeFileSync("temp/1acc.html", tds, "utf8", err => {
+    if (err) throw err;
+    console.log("---- 1acc has been saved!");
+  });
+  // await page.click("#dashboardform\\:cerrarSesion");
+
   /* ----------------------------------- loging out and closing browser ----------------------------------- */
   if (data.length === 0) {
     await page.click("#dashboardform\\:cerrarSesion");
     await page.waitForSelector("#personas-ingresar");
     await page.screenshot({ path: "temp/logoutScreenshot.png" });
+    fs.writeFileSync("temp/daviviendaLoggedOut.html", content, "utf8", err => {
+      if (err) throw err;
+      console.log("---- daviviendaLoggedOut has been saved!");
+    });
   }
   await browser.close();
-
-  fs.writeFile("temp/daviviendaLoggedOut.html", content, "utf8", err => {
-    if (err) throw err;
-    console.log("---- daviviendaLoggedOut has been saved!");
-  });
-
-  fs.writeFile("temp/daviviendaLoggedIn.html", pageContent, "utf8", err => {
-    if (err) throw err;
-    console.log("---- DaviviendaLoggedIn has been saved!");
-  });
 
   console.log("[Sending data to postman or api caller]");
   if (data.length > 0) {
@@ -143,10 +161,6 @@ const getReports = async (req, res) => {
   } else {
     res.sendFile(path.resolve("temp/daviviendaLoggedInScreenshot.png"));
   }
-  /* Getting basic info */
-  console.log('[... getting basic info]');
-  basicInfo()
-
   
 };
 
