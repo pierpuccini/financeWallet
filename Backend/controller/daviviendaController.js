@@ -1,8 +1,8 @@
-const express = require("express");
 const path = require("path");
-const puppeteer = require("puppeteer");
 const fs = require("fs");
+const puppeteer = require("puppeteer");
 const credentials = require("../../credentials.json");
+const HTMLParser = require('node-html-parser');
 
 const getReports = async (req, res) => {
   const { id, password } = credentials;
@@ -84,10 +84,15 @@ const getReports = async (req, res) => {
   console.log("[ PREVENTIVE screenshot & content]");
 
   let pageContent = await page.content();
-  fs.writeFile("temp/preventiveDaviviendaLoggedIn.html", pageContent, "utf8", err => {
-    if (err) throw err;
-    console.log("preventiveDaviviendaLoggedIn been saved!");
-  });
+  fs.writeFile(
+    "temp/preventiveDaviviendaLoggedIn.html",
+    pageContent,
+    "utf8",
+    err => {
+      if (err) throw err;
+      console.log("preventiveDaviviendaLoggedIn been saved!");
+    }
+  );
 
   await page.screenshot({ path: "temp/preventiveDaviviendaLoggedIn.png" });
 
@@ -138,12 +143,48 @@ const getReports = async (req, res) => {
   } else {
     res.sendFile(path.resolve("temp/daviviendaLoggedInScreenshot.png"));
   }
+  /* Getting basic info */
+  console.log('[... getting basic info]');
+  basicInfo()
+
+  
 };
 
-const parseHtmlForReport = async (req, res) => {
+const basicInfo = async (req, res) => {
+  console.log("[ --- parsing report --- ]");
+  const davivienda = fs.readFileSync(path.resolve("temp/daviviendaLoggedIn.html"), "utf8", (err) => {
+    if (err) throw err;
+  });
 
-  console.log("[started]");
-  fs.readFile(path.resolve("temp/daviviendaLoggedIn.html"))
+  let root = HTMLParser.parse(davivienda)
+  root = root.querySelectorAll('#dashboardform:pagepanel .content-resumen table tbody tr')
+
+  let servicesInfo = []
+  root.forEach(services => {
+    name = services.querySelectorAll('td table tbody tr td')[0].innerHTML
+    let account = {}
+    if (name.includes('Cuenta')) {
+      account = {
+        available: services.querySelectorAll('td table tbody tr td')[1].innerHTML,
+        savings: services.querySelectorAll('td table tbody tr td')[3].innerHTML,
+        total: services.querySelectorAll('td table tbody tr td')[5].innerHTML
+      }
+    } else {
+      account = {
+        available: services.querySelectorAll('td table tbody tr td')[1].innerHTML,
+        minimumPayment: {
+          ammount: services.querySelectorAll('td table tbody tr td')[2].innerHTML,
+          dateDue: services.querySelectorAll('td table tbody tr td')[3].innerHTML
+        },
+        debt: services.querySelectorAll('td table tbody tr td')[4].innerHTML,
+        totalPayment: services.querySelectorAll('td table tbody tr td')[5].innerHTML
+      }
+    }
+    servicesInfo = [...servicesInfo, {name, account}]
+  });
+  console.log('servicesInfo', servicesInfo);
+
+  res.send(servicesInfo)
 };
 
-module.exports = { getReports };
+module.exports = { getReports, basicInfo };
