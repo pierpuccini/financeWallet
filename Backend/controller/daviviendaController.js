@@ -117,14 +117,14 @@ const getReports = async (req, res) => {
         await browser.close();
         console.log("[Sending error to postman or api caller]");
         if (data.length > 0) {
-          res.send();
           throw { code: "already-logged-in", message: data[1] };
         }
       }
     }
 
     /* ----------------------------------- taking screenshot and grabing content ----------------------------------- */
-    console.log("[closing]");
+    console.log('--- waiting for .type-one ---');
+    await page.waitForSelector('.type-one')
     pageContent = await page.content();
     console.log("[taking daviviendaLoggedInScreenshot]");
     await page.screenshot({ path: "temp/daviviendaLoggedInScreenshot.png" });
@@ -145,25 +145,33 @@ const getReports = async (req, res) => {
     // basicInfo()
 
     let $ = cheerio.load(pageContent);
-    // console.log("detailedInfoAccounts", $(".type-one tbody").html());
 
-    let text = $(".type-one tbody").filter('tr td a').attr('id')
-    console.log('text',text);
-    // $.each(()=>{
+    let accountId = $(".type-one tbody tr td a").attr('id').split(':');
+    let accountDivIds = [];
+    let accounts = $(".type-one tbody").closest('tr').length
+    console.log('accountId',accountId);
+    for (let i = 0; i < accounts; i++) {    
+      let divId = accountId
+      divId[2] = i
+      accountDivIds.push(divId.join('\\:'))
+    }
 
-    // })
-
-    // $.map(async  (i ,el) => {
-    //   const detailedInfoID = el('td a').attr('id');
-    //   console.log('attributes',detailedInfoID);
-    //   await page.click(detailedInfoID);
-    //   fs.writeFileSync(`temp/${i}acc.html`, page.content(), "utf8", err => {
-    //     if (err) throw err;
-    //     console.log(`---- ${i}acc has been saved!`);
-    //   });
-    // })
+    accountDivIds.map(async (id,i)=>{
+      await page.click(`#${id}`)
+      pageContent = await page.content();
+      fs.writeFileSync(
+        `temp/daviviendaAcc${i}.html`,
+        pageContent,
+        "utf8",
+        err => {
+          if (err) throw err;
+          console.log(`---- daviviendaAcc${i} has been saved!`);
+        }
+      );
+    })
 
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
+    console.log("[closing]");
     if (data.length === 0) {
       await page.click("#dashboardform\\:cerrarSesion");
       await page.waitForSelector("#personas-ingresar");
@@ -185,7 +193,7 @@ const getReports = async (req, res) => {
     console.log("[-- end --]");
 
   } catch (error) {
-    console.log('error', error);
+    console.log('!!! error in catch !!!', error);
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
     if (data.length === 0) {
       await page.click("#dashboardform\\:cerrarSesion");
