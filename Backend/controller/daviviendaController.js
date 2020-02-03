@@ -145,11 +145,10 @@ const getReports = async (req, res) => {
     // basicInfo()
 
     let $ = cheerio.load(pageContent);
-    console.log("detailedInfoAccounts", $(".type-one tbody").html());
+    // console.log("detailedInfoAccounts", $(".type-one tbody").html());
 
-    $(".type-one tbody").each(()=>{
-      console.log('text',$(this).find('a').text());
-    })
+    let text = $(".type-one tbody").filter('tr td a').attr('id')
+    console.log('text',text);
     // $.each(()=>{
 
     // })
@@ -264,4 +263,25 @@ const basicInfo = async (req, res) => {
   res.send(servicesInfo);
 };
 
-module.exports = { getReports, basicInfo };
+const test = (req, res) => {
+  const pageContent = fs.readFileSync(
+    path.resolve("temp/daviviendaLoggedIn--.html"),
+    "utf8",
+    err => {
+      if (err) throw err;
+    }
+  );
+  let $ = cheerio.load(pageContent);
+  let accountId = $(".type-one tbody tr td a").attr('id').split(':');
+  let accountDivIds = [];
+  let accounts = $(".type-one tbody").closest('tr').length
+  console.log('accountId',accountId);
+  for (let i = 0; i < accounts; i++) {    
+    let divId = accountId
+    divId[2] = i
+    accountDivIds.push(divId.join(':'))
+  }
+  console.log('accountDivIds',accountDivIds);
+}
+
+module.exports = { getReports, basicInfo, test };
