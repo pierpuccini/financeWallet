@@ -90,7 +90,7 @@ const getReports = async (req, res) => {
 
     let pageContent = await page.content();
     fs.writeFile(
-      "temp/preventiveDaviviendaLoggedIn.html",
+      "temp/davi/preventive/preventiveDaviviendaLoggedIn.html",
       pageContent,
       "utf8",
       err => {
@@ -99,7 +99,7 @@ const getReports = async (req, res) => {
       }
     );
 
-    await page.screenshot({ path: "temp/preventiveDaviviendaLoggedIn.png" });
+    await page.screenshot({ path: "temp/davi/preventive/preventiveDaviviendaLoggedIn.png" });
 
     /* ----------------------------------- checking for error ----------------------------------- */
     console.log("[ --- checking for errors ---]");
@@ -181,20 +181,19 @@ const getReports = async (req, res) => {
       timeout: 120000
     });
     console.log('\x1b[33m','last movements loaded!');
-    /* TODO: GET TABLE FROM BELLOW */
-    // await frameContentDetails.waitForSelector("center form table tbody", {
-    //   timeout: 120000
-    // });
-    const movements = await frameContentDetails.$x("//a[contains(text(), 'Últimos movimientos')]");
-    if (movements.length > 0) {
-      await movements[0].click();
-      await frameContentDetails.waitForSelector('center form table tbody')
-      let pageContent
-      frameContentDetails.$eval('center form table', (element) => {
-        pageContent = element.innerHTML
-        return element.innerHTML
-      })
 
+    // let accountOptions = await frameContentDetails.$eval('center form table', (element) => element.innerHTML)
+    // fs.writeFileSync(`temp/accountOptions.html`, accountOptions ,"utf8",err => {
+    //   if (err) throw err;
+    //     console.log(`---- accountOptions has been saved!`);
+    //   }
+    // );
+    const movements = await frameContentDetails.$x("//a[contains(., 'Últimos movimientos')]");
+    if (movements.length > 0) {
+      console.log('movements',movements);
+      await movements[0].click();
+      await frameContentDetails.waitFor(15000);
+      let movementsTable = await frameContentDetails.$eval('center form table', (element) => element.innerHTML)
       // let $ = cheerio.load(pageContent);
       // const result = $("center form table tr").map((i, element) => ({
       //   date: $(element).find('td:nth-of-type(1)').text().trim(),
@@ -202,17 +201,18 @@ const getReports = async (req, res) => {
       //   id: $(element).find('td:nth-of-type(3)').text().trim(),
       //   description: $(element).find('td:nth-of-type(4)').text().trim(),
       // })).get()
-
-      fs.writeFileSync(`temp/accAsJson.html`, pageContent ,"utf8",err => {
+      fs.writeFileSync(`temp/movementsTable.html`, movementsTable ,"utf8",err => {
         if (err) throw err;
-          console.log(`---- daviviendaAcc1 has been saved!`);
+          console.log(`---- movementsTable has been saved!`);
         }
       );
+
+
     } else {
       throw new Error("Link not found");
     }
     await page.screenshot({ path: "temp/daviviendaAccIframe1.png" });
-    fs.writeFileSync(`temp/daviviendaAccIframe1.txt`,JSON.stringify(frameContentDetails),"utf8",err => {
+    fs.writeFileSync(`temp/daviviendaAccIframe1.txt`,frameContentDetails,"utf8",err => {
         if (err) throw err;
         console.log(`---- daviviendaAcc1 has been saved!`);
       }
@@ -241,24 +241,21 @@ const getReports = async (req, res) => {
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
     console.log('\x1b[33m',"[closing]");
     console.log('\x1b[0m','data length: ', data.length);
-      await page.click("#dashboardform\\:cerrarSesion");
-      console.log('\x1b[33m',"[ closing sesion and waiting]");
-      await page.waitForSelector("#personas-ingresar", {
-        timeout: 120000
-      });
-      console.log('\x1b[32m',"[-- session closed! --]");
-      console.log('\x1b[0m');
-      await page.screenshot({ path: "temp/logoutScreenshot.png" });
-      fs.writeFileSync(
-        "temp/daviviendaLoggedOut.html",
-        page.content(),
-        "utf8",
-        err => {
-          if (err) throw err;
-          console.log("---- daviviendaLoggedOut has been saved!");
-        }
+    await page.click("#dashboardform\\:cerrarSesion");
+    console.log('\x1b[33m',"[ closing sesion]");
+    console.log('\x1b[0m');
+    await page.screenshot({ path: "temp/logoutScreenshot.png" });
+    fs.writeFileSync(
+      "temp/daviviendaLoggedOut.html",
+      page.content(),
+      "utf8",
+      err => {
+        if (err) throw err;
+        console.log("---- daviviendaLoggedOut has been saved!");
+      }
       );
-    
+  
+    console.log('\x1b[32m',"[-- session closed! --]");
     console.log("[Sending data to postman or api caller]");
     res.sendFile(path.resolve("temp/daviviendaLoggedInScreenshot.png"));
     await browser.close();        
@@ -269,7 +266,7 @@ const getReports = async (req, res) => {
     console.log('\x1b[31m','!!! error in catch !!!', error);
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
     console.log('data in catch', data.length);
-    if (data.length !== 0 && error.code !== "already-logged-in") {
+    if (data.length === 0 || error.code !== "already-logged-in") {
       await page.click("#dashboardform\\:cerrarSesion");
       await page.waitForSelector("#personas-ingresar");
       await page.screenshot({ path: "temp/logoutScreenshot.png" });
