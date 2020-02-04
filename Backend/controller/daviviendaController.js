@@ -240,7 +240,7 @@ const getReports = async (req, res) => {
     console.log('\x1b[31m','!!! error in catch !!!', error);
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
     console.log('data in catch', data.length);
-    if (data.length !== 0) {
+    if (data.length !== 0 || error.code !== "already-logged-in") {
       await page.click("#dashboardform\\:cerrarSesion");
       await page.waitForSelector("#personas-ingresar");
       await page.screenshot({ path: "temp/logoutScreenshot.png" });
