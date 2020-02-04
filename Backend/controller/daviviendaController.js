@@ -180,6 +180,7 @@ const getReports = async (req, res) => {
     await frameContentDetails.waitForXPath("//a[contains(text(), 'Últimos movimientos')]", {
       timeout: 120000
     });
+    console.log('\x1b[33m','last movements loaded!');
     /* TODO: GET TABLE FROM BELLOW */
     // await frameContentDetails.waitForSelector("center form table tbody", {
     //   timeout: 120000
@@ -187,11 +188,31 @@ const getReports = async (req, res) => {
     const movements = await frameContentDetails.$x("//a[contains(text(), 'Últimos movimientos')]");
     if (movements.length > 0) {
       await movements[0].click();
+      await frameContentDetails.waitForSelector('center form table tbody')
+      let pageContent
+      frameContentDetails.$eval('center form table', (element) => {
+        pageContent = element.innerHTML
+        return element.innerHTML
+      })
+
+      // let $ = cheerio.load(pageContent);
+      // const result = $("center form table tr").map((i, element) => ({
+      //   date: $(element).find('td:nth-of-type(1)').text().trim(),
+      //   amount: $(element).find('td:nth-of-type(2)').text().trim(),
+      //   id: $(element).find('td:nth-of-type(3)').text().trim(),
+      //   description: $(element).find('td:nth-of-type(4)').text().trim(),
+      // })).get()
+
+      fs.writeFileSync(`temp/accAsJson.html`, pageContent ,"utf8",err => {
+        if (err) throw err;
+          console.log(`---- daviviendaAcc1 has been saved!`);
+        }
+      );
     } else {
       throw new Error("Link not found");
     }
     await page.screenshot({ path: "temp/daviviendaAccIframe1.png" });
-    fs.writeFileSync(`temp/daviviendaAccIframe1.html`,frameContentDetails,"utf8",err => {
+    fs.writeFileSync(`temp/daviviendaAccIframe1.txt`,JSON.stringify(frameContentDetails),"utf8",err => {
         if (err) throw err;
         console.log(`---- daviviendaAcc1 has been saved!`);
       }
@@ -220,7 +241,6 @@ const getReports = async (req, res) => {
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
     console.log('\x1b[33m',"[closing]");
     console.log('\x1b[0m','data length: ', data.length);
-    if (data.length === 0) {
       await page.click("#dashboardform\\:cerrarSesion");
       console.log('\x1b[33m',"[ closing sesion and waiting]");
       await page.waitForSelector("#personas-ingresar", {
@@ -238,7 +258,6 @@ const getReports = async (req, res) => {
           console.log("---- daviviendaLoggedOut has been saved!");
         }
       );
-    }
     
     console.log("[Sending data to postman or api caller]");
     res.sendFile(path.resolve("temp/daviviendaLoggedInScreenshot.png"));
@@ -331,23 +350,21 @@ const basicInfo = async (req, res) => {
 
 const test = (req, res) => {
   const pageContent = fs.readFileSync(
-    path.resolve("temp/daviviendaLoggedIn--.html"),
+    path.resolve("temp/table.html"),
     "utf8",
     err => {
       if (err) throw err;
     }
   );
   let $ = cheerio.load(pageContent);
-  let accountId = $(".type-one tbody tr td a").attr('id').split(':');
-  let accountDivIds = [];
-  let accounts = $(".type-one tbody").closest('tr').length
-  console.log('accountId',accountId);
-  for (let i = 0; i < accounts; i++) {    
-    let divId = accountId
-    divId[2] = i
-    accountDivIds.push(divId.join(':'))
-  }
-  console.log('accountDivIds',accountDivIds);
+  const result = $("tr").map((i, element) => ({
+    date: $(element).find('td:nth-of-type(1)').text().trim(),
+    amount: $(element).find('td:nth-of-type(2)').text().trim(),
+    id: $(element).find('td:nth-of-type(3)').text().trim(),
+    description: $(element).find('td:nth-of-type(4)').text().trim(),
+  })).get()
+  console.log(JSON.stringify(result))
+  res.send(result)
 }
 
 module.exports = { getReports, basicInfo, test };
