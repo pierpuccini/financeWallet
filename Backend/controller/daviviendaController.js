@@ -7,7 +7,7 @@ var HTMLParser = require('node-html-parser');
 
 const getReports = async (req, res) => {
   const { id, password } = credentials;
-  console.log("[started DAVIVIENDA]");
+  console.log('\x1b[0m',"[started DAVIVIENDA]");
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   let data = [];
@@ -124,7 +124,9 @@ const getReports = async (req, res) => {
 
     /* ----------------------------------- taking screenshot and grabing content ----------------------------------- */
     console.log('--- waiting for .type-one ---');
-    await page.waitForSelector('.type-one')
+    await page.waitForSelector('.type-one', {
+      timeout: 120000
+    })
     pageContent = await page.content();
     console.log("[taking daviviendaLoggedInScreenshot]");
     await page.screenshot({ path: "temp/daviviendaLoggedInScreenshot.png" });
@@ -156,29 +158,70 @@ const getReports = async (req, res) => {
       accountDivIds.push(divId.join('\\:'))
     }
 
-    accountDivIds.map(async (id,i)=>{
-      await page.click(`#${id}`)
-      pageContent = await page.content();
-      fs.writeFileSync(
-        `temp/daviviendaAcc${i}.html`,
-        pageContent,
-        "utf8",
-        err => {
-          if (err) throw err;
-          console.log(`---- daviviendaAcc${i} has been saved!`);
-        }
-      );
-    })
+    console.log('accountDivIds',accountDivIds);
+    await page.click(`#${accountDivIds[0]}`)
+    /* ----------------------------------- waiting for iframe ----------------------------------- */
+    console.log("[waiting for iframe]");
+    await page.waitForSelector("#dashboardform\\:dynamicIframe iframe", {
+      timeout: 120000
+    });
+    await page.screenshot({ path: "temp/daviviendaAcc1.png" });
+    pageContent = await page.content();
+    fs.writeFileSync(`temp/daviviendaAcc1.html`,pageContent,"utf8",err => {
+        if (err) throw err;
+        console.log(`---- daviviendaAcc1 has been saved!`);
+      }
+    );
+    const elementHandleDetails = await page.$("#dashboardform\\:dynamicIframe iframe");
+
+    /* ----------------------------------- iFrame Loaded ----------------------------------- */
+    console.log("[*** iFrame Loaded ***]");
+    await elementHandleDetails.contentFrame().waitForSelector("center form table tbody", {
+      timeout: 120000
+    });
+    const frameContentDetails = await elementHandleDetails.contentFrame();
+
+    await page.screenshot({ path: "temp/daviviendaAccIframe1.png" });
+    fs.writeFileSync(`temp/daviviendaAccIframe1.html`,frameContentDetails,"utf8",err => {
+        if (err) throw err;
+        console.log(`---- daviviendaAcc1 has been saved!`);
+      }
+    );
+
+    await page.click('#dashboardform\\:goToResumen')
+    await page.screenshot({ path: "temp/backToHome.png" });
+
+    // accountDivIds.map(async (id,i)=>{
+    //   await page.click(`#${id}`)
+    //   pageContent = await page.content();
+    //   fs.writeFileSync(
+    //     `temp/daviviendaAcc${i}.html`,
+    //     pageContent,
+    //     "utf8",
+    //     err => {
+    //       if (err) throw err;
+    //       console.log(`---- daviviendaAcc${i} has been saved!`);
+    //     }
+    //   );
+    // })
+            
+    /* TODO END ID dashboardform:goToResumen */
 
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
-    console.log("[closing]");
+    console.log('\x1b[33m',"[closing]");
+    console.log('\x1b[0m','data length: ', data.length);
     if (data.length === 0) {
       await page.click("#dashboardform\\:cerrarSesion");
-      await page.waitForSelector("#personas-ingresar");
+      console.log('\x1b[33m',"[ closing sesion and waiting]");
+      await page.waitForSelector("#personas-ingresar", {
+        timeout: 120000
+      });
+      console.log('\x1b[32m',"[-- session closed! --]");
+      console.log('\x1b[0m');
       await page.screenshot({ path: "temp/logoutScreenshot.png" });
       fs.writeFileSync(
         "temp/daviviendaLoggedOut.html",
-        content,
+        page.content(),
         "utf8",
         err => {
           if (err) throw err;
@@ -190,12 +233,14 @@ const getReports = async (req, res) => {
 
     console.log("[Sending data to postman or api caller]");
     res.sendFile(path.resolve("temp/daviviendaLoggedInScreenshot.png"));
-    console.log("[-- end --]");
+    console.log('\x1b[32m',"[-- end succesfully--]");
+    console.log('\x1b[0m');
 
   } catch (error) {
-    console.log('!!! error in catch !!!', error);
+    console.log('\x1b[31m','!!! error in catch !!!', error);
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
-    if (data.length === 0) {
+    console.log('data in catch', data.length);
+    if (data.length !== 0) {
       await page.click("#dashboardform\\:cerrarSesion");
       await page.waitForSelector("#personas-ingresar");
       await page.screenshot({ path: "temp/logoutScreenshot.png" });
@@ -218,7 +263,8 @@ const getReports = async (req, res) => {
       res.send({ code: "server error", message: error });
     }
 
-    console.log("[-- end with error --]");
+    console.log('\x1b[31m',"[-- end with error --]");
+    console.log('\x1b[0m');
   }
 };
 
