@@ -176,11 +176,20 @@ const getReports = async (req, res) => {
 
     /* ----------------------------------- iFrame Loaded ----------------------------------- */
     console.log("[*** iFrame Loaded ***]");
-    await elementHandleDetails.contentFrame().waitForSelector("center form table tbody", {
+    const frameContentDetails = await elementHandleDetails.contentFrame();
+    await frameContentDetails.waitForXPath("//a[contains(text(), 'Últimos movimientos')]", {
       timeout: 120000
     });
-    const frameContentDetails = await elementHandleDetails.contentFrame();
-
+    /* TODO: GET TABLE FROM BELLOW */
+    // await frameContentDetails.waitForSelector("center form table tbody", {
+    //   timeout: 120000
+    // });
+    const movements = await frameContentDetails.$x("//a[contains(text(), 'Últimos movimientos')]");
+    if (movements.length > 0) {
+      await movements[0].click();
+    } else {
+      throw new Error("Link not found");
+    }
     await page.screenshot({ path: "temp/daviviendaAccIframe1.png" });
     fs.writeFileSync(`temp/daviviendaAccIframe1.html`,frameContentDetails,"utf8",err => {
         if (err) throw err;
@@ -188,6 +197,7 @@ const getReports = async (req, res) => {
       }
     );
 
+    console.log('succesfully retrevived past movements...');
     await page.click('#dashboardform\\:goToResumen')
     await page.screenshot({ path: "temp/backToHome.png" });
 
@@ -229,13 +239,13 @@ const getReports = async (req, res) => {
         }
       );
     }
-    await browser.close();
-
+    
     console.log("[Sending data to postman or api caller]");
     res.sendFile(path.resolve("temp/daviviendaLoggedInScreenshot.png"));
+    await browser.close();        
     console.log('\x1b[32m',"[-- end succesfully--]");
     console.log('\x1b[0m');
-
+    
   } catch (error) {
     console.log('\x1b[31m','!!! error in catch !!!', error);
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
@@ -253,8 +263,10 @@ const getReports = async (req, res) => {
           console.log("---- daviviendaLoggedOut has been saved!");
         }
       );
+      await browser.close();
+    } else {
+      await browser.close();
     }
-    await browser.close();
 
     console.log("[Sending error to postman or api caller]");
     if (data.length > 0) {
