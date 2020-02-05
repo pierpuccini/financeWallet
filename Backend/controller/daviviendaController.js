@@ -218,9 +218,6 @@ const getReports = async (req, res) => {
     console.log('\x1b[33m',"[ --- Closing --- ]");
     console.log("                              ");
     await page.click("#dashboardform\\:cerrarSesion");
-    await page.waitForSelector("#personas-ingresar", {
-      timeout: 120000
-    });
     console.log('\x1b[0m');    
     console.log('\x1b[32m',"[-- session closed! --]");
     console.log("[Sending data to postman or api caller]");
