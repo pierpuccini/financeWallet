@@ -129,11 +129,11 @@ const getReports = async (req, res) => {
     })
     pageContent = await page.content();
     console.log("[taking daviviendaLoggedInScreenshot]");
-    await page.screenshot({ path: "temp/daviviendaLoggedInScreenshot.png" });
+    await page.screenshot({ path: "temp/davi/logedIn/daviviendaLoggedInScreenshot.png" });
 
     console.log(" --- Writing html file --- ");
     fs.writeFileSync(
-      "temp/daviviendaLoggedIn.html",
+      "temp/davi/logedIn/daviviendaLoggedIn.html",
       pageContent,
       "utf8",
       err => {
@@ -151,98 +151,76 @@ const getReports = async (req, res) => {
     let accountId = $(".type-one tbody tr td a").attr('id').split(':');
     let accountDivIds = [];
     let accounts = $(".type-one tbody").closest('tr').length
-    console.log('accountId',accountId);
     for (let i = 0; i < accounts; i++) {    
       let divId = accountId
       divId[2] = i
       accountDivIds.push(divId.join('\\:'))
     }
 
-    console.log('accountDivIds',accountDivIds);
-    await page.click(`#${accountDivIds[0]}`)
-    /* ----------------------------------- waiting for iframe ----------------------------------- */
-    console.log("[waiting for iframe]");
-    await page.waitForSelector("#dashboardform\\:dynamicIframe iframe", {
-      timeout: 120000
-    });
-    await page.screenshot({ path: "temp/daviviendaAcc1.png" });
-    pageContent = await page.content();
-    fs.writeFileSync(`temp/daviviendaAcc1.html`,pageContent,"utf8",err => {
+    for (let i = 0; i < accountDivIds.length; i++) {
+      await page.waitForSelector(`#${accountDivIds[i]}`, {
+        timeout: 120000
+      });
+      await page.click(`#${accountDivIds[i]}`)
+      /* ----------------------------------- waiting for iframe ----------------------------------- */
+      console.log("[waiting for iframe]");
+      await page.waitForSelector("#dashboardform\\:dynamicIframe iframe", {
+        timeout: 120000
+      });
+      pageContent = await page.content();
+      fs.writeFileSync(`temp/daviviendaAcc${i}.html`,pageContent,"utf8",err => {
         if (err) throw err;
-        console.log(`---- daviviendaAcc1 has been saved!`);
+        console.log(`---- daviviendaAcc${i} has been saved!`);
       }
-    );
-    const elementHandleDetails = await page.$("#dashboardform\\:dynamicIframe iframe");
-
-    /* ----------------------------------- iFrame Loaded ----------------------------------- */
-    console.log("[*** iFrame Loaded ***]");
-    const frameContentDetails = await elementHandleDetails.contentFrame();
-    await frameContentDetails.waitForXPath("//a[contains(text(), 'Últimos movimientos')]", {
-      timeout: 120000
-    });
-    console.log('\x1b[33m','last movements loaded!');
-
-    // let accountOptions = await frameContentDetails.$eval('center form table', (element) => element.innerHTML)
-    // fs.writeFileSync(`temp/accountOptions.html`, accountOptions ,"utf8",err => {
-    //   if (err) throw err;
-    //     console.log(`---- accountOptions has been saved!`);
-    //   }
-    // );
-    const movements = await frameContentDetails.$x("//a[contains(., 'Últimos movimientos')]");
-    if (movements.length > 0) {
-      console.log('movements',movements);
-      await movements[0].click();
-      await frameContentDetails.waitFor(15000);
-      let movementsTable = await frameContentDetails.$eval('center form table', (element) => element.innerHTML)
-      // let $ = cheerio.load(pageContent);
-      // const result = $("center form table tr").map((i, element) => ({
-      //   date: $(element).find('td:nth-of-type(1)').text().trim(),
-      //   amount: $(element).find('td:nth-of-type(2)').text().trim(),
-      //   id: $(element).find('td:nth-of-type(3)').text().trim(),
-      //   description: $(element).find('td:nth-of-type(4)').text().trim(),
-      // })).get()
-      fs.writeFileSync(`temp/movementsTable.html`, movementsTable ,"utf8",err => {
-        if (err) throw err;
-          console.log(`---- movementsTable has been saved!`);
-        }
       );
-
-
-    } else {
-      throw new Error("Link not found");
-    }
-    await page.screenshot({ path: "temp/daviviendaAccIframe1.png" });
-    fs.writeFileSync(`temp/daviviendaAccIframe1.txt`,frameContentDetails,"utf8",err => {
-        if (err) throw err;
-        console.log(`---- daviviendaAcc1 has been saved!`);
+      await page.screenshot({ path: `temp/daviviendaAcc${i}.png` });
+      const elementHandleDetails = await page.$("#dashboardform\\:dynamicIframe iframe");
+      
+      /* ----------------------------------- iFrame Loaded ----------------------------------- */
+      console.log("[*** iFrame Loaded ***]");
+      const frameContentDetails = await elementHandleDetails.contentFrame();
+      await frameContentDetails.waitForXPath("//a[contains(., 'Últimos')]", {
+        timeout: 120000
+      });      
+      console.log('\x1b[33m','last movements loaded!');
+      let movements = await frameContentDetails.$x("//a[contains(., 'Últimos')]");
+      console.log('movements',movements);
+      if (movements.length > 0) {
+        await movements[0].click();
+        await frameContentDetails.waitFor(15000);
+        let movementsTable = await frameContentDetails.$eval('center form', (element) => element.innerHTML)
+        let $ = cheerio.load(movementsTable);
+        const result = $("tr").map((i, element) => ({
+          date: $(element).find('td:nth-of-type(1)').text().trim(),
+          amount: $(element).find('td:nth-of-type(2)').text().trim(),
+          id: $(element).find('td:nth-of-type(3)').text().trim(),
+          description: $(element).find('td:nth-of-type(4)').text().trim(),
+        })).get()
+        fs.writeFileSync(`temp/davi/movements/movementsData${i}.txt`, JSON.stringify(result) ,"utf8",err => {
+          if (err) throw err;
+            console.log(`---- movementsTable${i} has been saved!`);
+          }
+        );
+        fs.writeFileSync(`temp/davi/movements/movementsTable${i}.html`, movementsTable ,"utf8",err => {
+          if (err) throw err;
+            console.log(`---- movementsTable${i} has been saved!`);
+          }
+        );
+        
+      } else {
+        throw new Error("Link not found");
       }
-    );
-
-    console.log('succesfully retrevived past movements...');
-    await page.click('#dashboardform\\:goToResumen')
-    await page.screenshot({ path: "temp/backToHome.png" });
-
-    // accountDivIds.map(async (id,i)=>{
-    //   await page.click(`#${id}`)
-    //   pageContent = await page.content();
-    //   fs.writeFileSync(
-    //     `temp/daviviendaAcc${i}.html`,
-    //     pageContent,
-    //     "utf8",
-    //     err => {
-    //       if (err) throw err;
-    //       console.log(`---- daviviendaAcc${i} has been saved!`);
-    //     }
-    //   );
-    // })
+    
+      console.log('succesfully retrevived past movements...');
+      await page.click('#dashboardform\\:goToResumen')
+      await page.screenshot({ path: "temp/backToHome.png" });
+    }
             
-    /* TODO END ID dashboardform:goToResumen */
-
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
     console.log('\x1b[33m',"[closing]");
-    console.log('\x1b[0m','data length: ', data.length);
     await page.click("#dashboardform\\:cerrarSesion");
-    console.log('\x1b[33m',"[ closing sesion]");
+    await page.waitForSelector("#personas-ingresar");
+    console.log('\x1b[33m',"[closing sesion]");
     console.log('\x1b[0m');
     await page.screenshot({ path: "temp/logoutScreenshot.png" });
     fs.writeFileSync(
@@ -270,15 +248,6 @@ const getReports = async (req, res) => {
       await page.click("#dashboardform\\:cerrarSesion");
       await page.waitForSelector("#personas-ingresar");
       await page.screenshot({ path: "temp/logoutScreenshot.png" });
-      fs.writeFileSync(
-        "temp/daviviendaLoggedOut.html",
-        content,
-        "utf8",
-        err => {
-          if (err) throw err;
-          console.log("---- daviviendaLoggedOut has been saved!");
-        }
-      );
       await browser.close();
     } else {
       await browser.close();
@@ -347,7 +316,7 @@ const basicInfo = async (req, res) => {
 
 const test = (req, res) => {
   const pageContent = fs.readFileSync(
-    path.resolve("temp/table.html"),
+    path.resolve("temp/davi/movements/movementsTable.html"),
     "utf8",
     err => {
       if (err) throw err;
