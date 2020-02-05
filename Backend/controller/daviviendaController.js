@@ -6,25 +6,27 @@ const cheerio = require("cheerio");
 var HTMLParser = require('node-html-parser');
 
 const getReports = async (req, res) => {
-  const { id, password } = credentials;
-  console.log('\x1b[0m',"[started DAVIVIENDA]");
+  const { id, password, url } = credentials;
+  console.log('\x1b[0m',"[started DAVI]");
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   let data = [];
   try {
     /* ----------------------------------- getting page ----------------------------------- */
-    await page.goto("https://www.davivienda.com/wps/portal/personas/nuevo");
+    await page.goto(url);
 
     /* ----------------------------------- clicking Login ----------------------------------- */
     await page.click("#personas-ingresar");
 
     /* ----------------------------------- waiting for iframe ----------------------------------- */
-    console.log("[waiting for iframe]");
+    console.log("waiting for iframe ...");
     await page.waitForSelector("div#divIFrame iframe");
     const elementHandle = await page.$("div#divIFrame iframe");
 
     /* ----------------------------------- iFrame Loaded ----------------------------------- */
-    console.log("[*** iFrame Loaded ***]");
+    console.log("         ---         ");
+    console.log("*** iFrame Loaded ***");
+    console.log("         ---         ");
     const frameContent = await elementHandle.contentFrame();
     if ((await page.$("#closeButton")) !== null) {
       console.log("[! closing pop up !]");
@@ -32,14 +34,14 @@ const getReports = async (req, res) => {
     }
 
     /* ----------------------------------- Filling Document # ----------------------------------- */
-    console.log("[--- Filling Document number & focusing on input ---]");
+    console.log("-- Filling Document number & focusing on input");
     await frameContent.waitForSelector("#formAutenticar\\:numeroDocumento", {
       timeout: 120000
     });
     await frameContent.focus("#formAutenticar\\:numeroDocumento");
 
     /* ----------------------------------- Filling out input ----------------------------------- */
-    console.log("[ - filling out input - ]");
+    console.log(" -- Filling out input");
     await frameContent.$eval(
       "#formAutenticar\\:numeroDocumento",
       (el, value) => (el.value = value),
@@ -47,7 +49,7 @@ const getReports = async (req, res) => {
     );
 
     /* ----------------------------------- continue to password ----------------------------------- */
-    console.log("[ - continue to password - ]");
+    console.log("  -- Continue to password");
     await frameContent.click("#formAutenticar\\:btnSubmitCont");
     if ((await page.$("#closeButton")) !== null) {
       console.log("[! closing pop up !]");
@@ -55,7 +57,7 @@ const getReports = async (req, res) => {
     }
 
     /* ----------------------------------- PASSWORD INPUT ----------------------------------- */
-    console.log("[ --- PASSWORD INPUT --- ]");
+    console.log("   -- PASSWORD INPUT");
     await frameContent.waitForSelector("#formAutenticar\\:claveVirtual");
     await page.keyboard.type(password.toString(), { delay: 100 });
     await frameContent.$eval(
@@ -86,23 +88,24 @@ const getReports = async (req, res) => {
     }
 
     /* ----------------------------------- PREVENTIVE screenshot & content ----------------------------------- */
+    console.log("               ---                ");
     console.log("[ PREVENTIVE screenshot & content]");
+    console.log("               ---                ");
 
     let pageContent = await page.content();
     fs.writeFile(
-      "temp/davi/preventive/preventiveDaviviendaLoggedIn.html",
+      `temp/davi/preventive/preventiveLoggedIn#-#${id}.html`,
       pageContent,
       "utf8",
       err => {
         if (err) throw err;
-        console.log("preventiveDaviviendaLoggedIn been saved!");
+        console.log(`preventiveLoggedIn#-#${id} been saved!`);
       }
     );
-
-    await page.screenshot({ path: "temp/davi/preventive/preventiveDaviviendaLoggedIn.png" });
+    
 
     /* ----------------------------------- checking for error ----------------------------------- */
-    console.log("[ --- checking for errors ---]");
+    console.log("[ --- Checking for errors ---]");
     let content;
     if (!frameContent.isDetached()) {
       if ((await frameContent.$("#divMessageCodigo")) !== null) {
@@ -123,28 +126,36 @@ const getReports = async (req, res) => {
     }
 
     /* ----------------------------------- taking screenshot and grabing content ----------------------------------- */
-    console.log('--- waiting for .type-one ---');
+    console.log('Waiting for ".type-one" ...');
     await page.waitForSelector('.type-one', {
       timeout: 120000
     })
     pageContent = await page.content();
-    console.log("[taking daviviendaLoggedInScreenshot]");
-    await page.screenshot({ path: "temp/davi/logedIn/daviviendaLoggedInScreenshot.png" });
+    console.log(`[taking LoggedInScreenshot#-#${id}]`);    
 
     console.log(" --- Writing html file --- ");
     fs.writeFileSync(
-      "temp/davi/logedIn/daviviendaLoggedIn.html",
+      `temp/davi/in/in#-#${id}.html`,
       pageContent,
       "utf8",
       err => {
         if (err) throw err;
-        console.log("---- DaviviendaLoggedIn has been saved!");
+        console.log(`---- LoggedIn#-#${id} has been saved!`);
       }
     );
 
     /* ----------------------------------- grabing basic info from html file  ----------------------------------- */
-    console.log("[... getting basic info]");
-    // basicInfo()
+    console.log("   Getting basic info ...");
+    const overview = basicInfo(id)
+    fs.writeFile(
+      `temp/davi/overview#-#${id}.txt`,
+      JSON.stringify(overview),
+      "utf8",
+      err => {
+        if (err) throw err;
+        console.log(`overview#-#${id} been saved!`);
+      }
+    );
 
     let $ = cheerio.load(pageContent);
 
@@ -163,17 +174,10 @@ const getReports = async (req, res) => {
       });
       await page.click(`#${accountDivIds[i]}`)
       /* ----------------------------------- waiting for iframe ----------------------------------- */
-      console.log("[waiting for iframe]");
+      console.log("Waiting for iframe ...");
       await page.waitForSelector("#dashboardform\\:dynamicIframe iframe", {
         timeout: 120000
       });
-      pageContent = await page.content();
-      fs.writeFileSync(`temp/daviviendaAcc${i}.html`,pageContent,"utf8",err => {
-        if (err) throw err;
-        console.log(`---- daviviendaAcc${i} has been saved!`);
-      }
-      );
-      await page.screenshot({ path: `temp/daviviendaAcc${i}.png` });
       const elementHandleDetails = await page.$("#dashboardform\\:dynamicIframe iframe");
       
       /* ----------------------------------- iFrame Loaded ----------------------------------- */
@@ -182,9 +186,9 @@ const getReports = async (req, res) => {
       await frameContentDetails.waitForXPath("//a[contains(., 'Últimos')]", {
         timeout: 120000
       });      
-      console.log('\x1b[33m','last movements loaded!');
+      console.log('\x1b[33m','*** Last movements loaded ***');
       let movements = await frameContentDetails.$x("//a[contains(., 'Últimos')]");
-      console.log('movements',movements);
+
       if (movements.length > 0) {
         await movements[0].click();
         await frameContentDetails.waitFor(15000);
@@ -196,46 +200,31 @@ const getReports = async (req, res) => {
           id: $(element).find('td:nth-of-type(3)').text().trim(),
           description: $(element).find('td:nth-of-type(4)').text().trim(),
         })).get()
-        fs.writeFileSync(`temp/davi/movements/movementsData${i}.txt`, JSON.stringify(result) ,"utf8",err => {
+        fs.writeFileSync(`temp/davi/movements/movementsData${i}#-#${id}.txt`, JSON.stringify(result) ,"utf8",err => {
           if (err) throw err;
-            console.log(`---- movementsTable${i} has been saved!`);
+            console.log(`---- movementsTable${i}#-#${id} has been saved!`);
           }
-        );
-        fs.writeFileSync(`temp/davi/movements/movementsTable${i}.html`, movementsTable ,"utf8",err => {
-          if (err) throw err;
-            console.log(`---- movementsTable${i} has been saved!`);
-          }
-        );
-        
+        );       
       } else {
         throw new Error("Link not found");
       }
     
-      console.log('succesfully retrevived past movements...');
-      await page.click('#dashboardform\\:goToResumen')
-      await page.screenshot({ path: "temp/backToHome.png" });
+      console.log('*** Succesfully retrevived past movements ***');
+      await page.click('#dashboardform\\:goToResumen')      
     }
             
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
-    console.log('\x1b[33m',"[closing]");
+    console.log("                              ");
+    console.log('\x1b[33m',"[ --- Closing --- ]");
+    console.log("                              ");
     await page.click("#dashboardform\\:cerrarSesion");
-    await page.waitForSelector("#personas-ingresar");
-    console.log('\x1b[33m',"[closing sesion]");
-    console.log('\x1b[0m');
-    await page.screenshot({ path: "temp/logoutScreenshot.png" });
-    fs.writeFileSync(
-      "temp/daviviendaLoggedOut.html",
-      page.content(),
-      "utf8",
-      err => {
-        if (err) throw err;
-        console.log("---- daviviendaLoggedOut has been saved!");
-      }
-      );
-  
+    await page.waitForSelector("#personas-ingresar", {
+      timeout: 120000
+    });
+    console.log('\x1b[0m');    
     console.log('\x1b[32m',"[-- session closed! --]");
     console.log("[Sending data to postman or api caller]");
-    res.sendFile(path.resolve("temp/daviviendaLoggedInScreenshot.png"));
+    res.sendFile(path.resolve(`temp/davi/in/inSS#-#${id}.png`));
     await browser.close();        
     console.log('\x1b[32m',"[-- end succesfully--]");
     console.log('\x1b[0m');
@@ -265,10 +254,10 @@ const getReports = async (req, res) => {
   }
 };
 
-const basicInfo = async (req, res) => {
+const basicInfo = (id) => {
   console.log("[ --- parsing report --- ]");
-  const davivienda = fs.readFileSync(
-    path.resolve("temp/daviviendaLoggedIn.html"),
+  const d = fs.readFileSync(
+    path.resolve(`temp/davi/in/in#-#${id}.html`),
     "utf8",
     err => {
       if (err) throw err;
@@ -276,7 +265,7 @@ const basicInfo = async (req, res) => {
   );
 
   /* TODO: migrate to cheerio */
-  let root = HTMLParser.parse(davivienda);
+  let root = HTMLParser.parse(d);
   root = root.querySelectorAll(
     "#dashboardform:pagepanel .content-resumen table tbody tr"
   );
@@ -309,9 +298,8 @@ const basicInfo = async (req, res) => {
     }
     servicesInfo = [...servicesInfo, { name, account }];
   });
-  console.log("servicesInfo", servicesInfo);
 
-  res.send(servicesInfo);
+  return servicesInfo;
 };
 
 const test = (req, res) => {
@@ -333,4 +321,4 @@ const test = (req, res) => {
   res.send(result)
 }
 
-module.exports = { getReports, basicInfo, test };
+module.exports = { getReports, test };

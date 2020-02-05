@@ -17,7 +17,6 @@ router.post("/text", (req, res) => {
 });
 
 router.get("/davivienda-get-reports", daviviendaController.getReports);
-router.get("/parseReport", daviviendaController.basicInfo);
 router.get("/test", daviviendaController.test);
 
 module.exports = router;
