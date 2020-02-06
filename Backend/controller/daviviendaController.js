@@ -221,7 +221,7 @@ const getReports = async (req, res) => {
     console.log('\x1b[0m');    
     console.log('\x1b[32m',"[-- session closed! --]");
     console.log("[Sending data to postman or api caller]");
-    res.sendFile(path.resolve(`temp/davi/in/inSS#-#${id}.png`));
+    res.sendFile(path.resolve(`temp/davi/in/in#-#${id}.html`));
     await browser.close();        
     console.log('\x1b[32m',"[-- end succesfully--]");
     console.log('\x1b[0m');
