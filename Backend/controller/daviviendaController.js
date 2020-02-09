@@ -11,6 +11,10 @@ const getReports = async (req, res) => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   let data = [];
+  let info = {
+    overview: {},
+    movements: []
+  }
   try {
     /* ----------------------------------- getting page ----------------------------------- */
     await page.goto(url);
@@ -92,6 +96,7 @@ const getReports = async (req, res) => {
     console.log("[ PREVENTIVE screenshot & content]");
     console.log("               ---                ");
 
+    await page.screenshot({ path: `temp/davi/preventive/preventiveLoggedIn#-#${id}.png` });
     let pageContent = await page.content();
     fs.writeFile(
       `temp/davi/preventive/preventiveLoggedIn#-#${id}.html`,
@@ -106,7 +111,6 @@ const getReports = async (req, res) => {
 
     /* ----------------------------------- checking for error ----------------------------------- */
     console.log("[ --- Checking for errors ---]");
-    let content;
     if (!frameContent.isDetached()) {
       if ((await frameContent.$("#divMessageCodigo")) !== null) {
         console.log("[! ERROR PRESENT !]");
@@ -132,7 +136,7 @@ const getReports = async (req, res) => {
     })
     pageContent = await page.content();
     console.log(`[taking LoggedInScreenshot#-#${id}]`);    
-
+    
     console.log(" --- Writing html file --- ");
     fs.writeFileSync(
       `temp/davi/in/in#-#${id}.html`,
@@ -147,6 +151,7 @@ const getReports = async (req, res) => {
     /* ----------------------------------- grabing basic info from html file  ----------------------------------- */
     console.log("   Getting basic info ...");
     const overview = basicInfo(id)
+    info.overview = overview;
     fs.writeFile(
       `temp/davi/overview#-#${id}.txt`,
       JSON.stringify(overview),
@@ -200,6 +205,7 @@ const getReports = async (req, res) => {
           id: $(element).find('td:nth-of-type(3)').text().trim(),
           description: $(element).find('td:nth-of-type(4)').text().trim(),
         })).get()
+        info.movements.push(result);
         fs.writeFileSync(`temp/davi/movements/movementsData${i}#-#${id}.txt`, JSON.stringify(result) ,"utf8",err => {
           if (err) throw err;
             console.log(`---- movementsTable${i}#-#${id} has been saved!`);
@@ -218,10 +224,11 @@ const getReports = async (req, res) => {
     console.log('\x1b[33m',"[ --- Closing --- ]");
     console.log("                              ");
     await page.click("#dashboardform\\:cerrarSesion");
+    await page.screenshot({ path: `temp/LoggedScreenshot#-#${id}.png` });
     console.log('\x1b[0m');    
     console.log('\x1b[32m',"[-- session closed! --]");
     console.log("[Sending data to postman or api caller]");
-    res.sendFile(path.resolve(`temp/davi/in/in#-#${id}.html`));
+    res.send(info);
     await browser.close();        
     console.log('\x1b[32m',"[-- end succesfully--]");
     console.log('\x1b[0m');
