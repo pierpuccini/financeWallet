@@ -17,6 +17,7 @@ The test feature both Backend and Frontend in the same repo. In order to access 
     *keep in mind that this file doesn't save due to git ignore.
 5. Add a structured file structure under the TEMP folder as follows: 
     `temp>BANK_ABREVIATION>YOUR_DESIRED STRUCTURE`
+    
 **Frontend** 
 1. Locate directory with: `cd frontend`
 2. Install dependencies: `npm install`
