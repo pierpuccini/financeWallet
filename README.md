@@ -1,4 +1,4 @@
-﻿# Toolbox-test
+﻿# Finance wallet
 The test feature both Backend and Frontend in the same repo. In order to access each one of them please navigate to each one on a separate command line or terminal.
 
 **Backend**
