@@ -6,7 +6,7 @@ The test feature both Backend and Frontend in the same repo. In order to access 
 2. Install dependencies: `npm install`
 3. Run project with: `npm run-script dev`
 * _If you wish to test please run:_ `npm run-script test`
-4. Add a `credentials.json` file with the following structure: 
+4. Add to the global folder a `credentials.json` file with the following structure: 
     ``` 
     {
         "id": YOUR_ACC_ID,
