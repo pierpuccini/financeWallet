@@ -39,32 +39,39 @@ const getReports = async (req, res) => {
     fs.writeFile(`temp/bcol/page.html`, pageContent, "utf8", err => {
       if (err) throw err;
     });
-    console.log("Password page loaded");    
-    
-    let success = 0, element;
-    let passwordArr = password.toString().split('')
-    
+    console.log("Password page loaded");
+
+    let success = 0,
+      cheerioEl;
+    let passwordArr = password.toString().split("");
+
     while (success < passwordArr.length) {
       $ = cheerio.load(pageContent);
 
-      cheerioEl = $("#_KEYBRD > tbody > tr > td").map((i, element) => {
-        if ($(element).text() === passwordArr[success]) {
-          console.log('in first if');
-          console.log('text', $(element).text());
-          console.log('pass', passwordArr[success]);
-          return $(element)
+      $("#_KEYBRD > tbody > tr > td").each((i, element) => {
+        if (
+          $(element)
+            .text()
+            .trim() == passwordArr[success]
+        ) {
+          cheerioEl = $(element);
+          return false;
         }
-        return -1
-      })
-      console.log('cheerioEl',cheerioEl);
-      if (cheerioEl) {
-        console.log('id', $(cheerioEl).find('div').attr('id'));
-        await page.click($(cheerioEl).attr('id'))
-        success += 1
+      });
+
+      if (cheerioEl != 0) {
+        const divId = $(cheerioEl)
+          .find("div")
+          .attr("id");
+        console.log("id", divId);
+        // await page.click($(cheerioEl).parent().attr("class"));
+        const [targetElement] = await page.$x(`//div[@id='${divId}']/..`);
+        console.log("object", targetElement);
+        await targetElement.click();
+        success += 1;
       }
-      console.log('success',success);
     }
-    console.log('exited while');
+    console.log("Entered password!");
     // async function enterPassword() {
     //   let root = HTMLParser.parse(pageContent);
     //   root = root.querySelectorAll("#_KEYBRD tbody tr");
