@@ -153,7 +153,7 @@ const getReports = async (req, res) => {
     const overview = basicInfo(id)
     info.overview = overview;
     fs.writeFile(
-      `temp/davi/overview#-#${id}.txt`,
+      `temp/davi/overview/overview#-#${id}.txt`,
       JSON.stringify(overview),
       "utf8",
       err => {
@@ -224,7 +224,7 @@ const getReports = async (req, res) => {
     console.log('\x1b[33m',"[ --- Closing --- ]");
     console.log("                              ");
     await page.click("#dashboardform\\:cerrarSesion");
-    await page.screenshot({ path: `temp/LoggedScreenshot#-#${id}.png` });
+    await page.screenshot({ path: `temp/davi/LoggedScreenshot#-#${id}.png` });
     console.log('\x1b[0m');    
     console.log('\x1b[32m',"[-- session closed! --]");
     console.log("[Sending data to postman or api caller]");
