@@ -8,6 +8,7 @@ var HTMLParser = require("node-html-parser");
 const getReports = async (req, res) => {
   const { id, password, url } = credentials.bcol;
   console.log("\x1b[0m", "[started BANCOLOMBIA]");
+  /* NOTE: Headless FALSE shows progress in real time */
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
   let data = [];
@@ -32,12 +33,21 @@ const getReports = async (req, res) => {
 
   try {
     /* ----------------------------------- getting page ----------------------------------- */
-
     await page.goto(url);
-    console.log("\x1b[0m", "goto url");
+    let pageContent = await page.content();
+    fs.writeFile(
+      `temp/bcol/page.html`,
+      pageContent,
+      "utf8",
+      err => {
+        if (err) throw err;
+        console.log(`page saved!`);
+      }
+    );
 
-    /* ----------------------------------- clicking login  ----------------------------------- */
-
+    /* ----------------------------------- Entering user name  ----------------------------------- */
+    console.log("-- Entering username");
+    await page.waitForSelector("#username")
     await page.click("#old-btn-transaccional");
     console.log("\x1b[0m", "click en entrar");
 
@@ -64,25 +74,25 @@ const getReports = async (req, res) => {
       await page.click("#btnGo");
     }
 
-    async function init() {
-      let pageContent = await page.content();
-      const a = cheerio.load(pageContent);
-      const size = a("#_KEYBRD tbody tr").closest("tr").length;
+    // async function init() {
+    //   let pageContent = await page.content();
+    //   const a = cheerio.load(pageContent);
+    //   const size = a("#_KEYBRD tbody tr").closest("tr").length;
 
-      for (let i = 0; i < size; i++) {
-        for (let j = 0; j < 3; i++) {
-          a("#_KEYBRD tbody tr").each((i, el) => {
-            const num = a(el)
-              .find("div.text")
-              .text();
-            var car = password.slice(i, i + 1);
-            if (num == car) {
-              page.click(".bg_buttonSmall");
-            }
-          });
-        }
-      }
-    }
+    //   for (let i = 0; i < size; i++) {
+    //     for (let j = 0; j < 3; i++) {
+    //       a("#_KEYBRD tbody tr").each((i, el) => {
+    //         const num = a(el)
+    //           .find("div.text")
+    //           .text();
+    //         var car = password.slice(i, i + 1);
+    //         if (num == car) {
+    //           page.click(".bg_buttonSmall");
+    //         }
+    //       });
+    //     }
+    //   }
+    // }
     init();
     /*------------------------------------------*/
 
@@ -125,16 +135,16 @@ const getReports = async (req, res) => {
     await page.screenshot({
       path: `temp/bcolombia/preventive/preventiveLoggedIn#-#${id}.png`
     });
-    let pageContent = await page.content();
-    fs.writeFile(
-      `temp/bcolombia/preventive/preventiveLoggedIn#-#${id}.html`,
-      pageContent,
-      "utf8",
-      err => {
-        if (err) throw err;
-        console.log(`preventiveLoggedIn#-#${id} been saved!`);
-      }
-    );
+    // let pageContent = await page.content();
+    // fs.writeFile(
+    //   `temp/bcolombia/preventive/preventiveLoggedIn#-#${id}.html`,
+    //   pageContent,
+    //   "utf8",
+    //   err => {
+    //     if (err) throw err;
+    //     console.log(`preventiveLoggedIn#-#${id} been saved!`);
+    //   }
+    // );
 
     /* ----------------------------------- checking for error ----------------------------------- */
     console.log("[ --- Checking for errors ---]");
