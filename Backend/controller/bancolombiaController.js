@@ -20,6 +20,17 @@ const getReports = async (req, res) => {
   try {
     /* ----------------------------------- getting page ----------------------------------- */
     await page.goto(url);
+
+    /* ----------------------------------- Entering user name and submiting ----------------------------------- */
+    console.log("-- Entering username", id);
+    await page.waitForSelector("#username")
+    await page.type('#username', id, {delay: 100});
+
+    console.log("\x1b[0m", "Submited username");
+    await page.click("#btnGo");
+
+  /* ----------------------------------- Filling out user password with keypad ----------------------------------- */
+
     let pageContent = await page.content();
     fs.writeFile(
       `temp/bcol/page.html`,
@@ -30,37 +41,6 @@ const getReports = async (req, res) => {
         console.log(`page saved!`);
       }
     );
-
-    /* ----------------------------------- Entering user name and submiting ----------------------------------- */
-    console.log("-- Entering username", id);
-    await page.waitForSelector("#username")
-    await page.type('#username', id, {delay: 100});
-
-    console.log("\x1b[0m", "Submited username");
-    await page.click("#btnGo");
-
-    /* ----------------------------------- Filling Document # ----------------------------------- */
-    console.log("-- Filling Document number & focusing on input");
-    await frameContent.waitForSelector("#username", {
-      timeout: 120000
-    });
-    await frameContent.focus("#username");
-
-    /* ----------------------------------- Filling out input ----------------------------------- */
-    console.log(" -- Filling out input");
-    await frameContent.$eval(
-      "#username",
-      (el, value) => (el.value = value),
-      id
-    );
-
-    /* ----------------------------------- continue to password ----------------------------------- */
-    console.log("  -- Continue to password");
-    await frameContent.click("#btnGo");
-    if ((await page.$("#closeButton")) !== null) {
-      console.log("[! closing pop up !]");
-      await page.click("#btnGo");
-    }
 
     // async function init() {
     //   let pageContent = await page.content();
