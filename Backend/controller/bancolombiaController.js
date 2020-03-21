@@ -19,18 +19,6 @@ const getReports = async (req, res) => {
 
   await page.setRequestInterception(true);
 
-  page.on("request", req => {
-    if (
-      req.resourceType() == "stylesheet" ||
-      req.resourceType() == "font" ||
-      req.resourceType() == "image"
-    ) {
-      req.abort();
-    } else {
-      req.continue();
-    }
-  });
-
   try {
     /* ----------------------------------- getting page ----------------------------------- */
     await page.goto(url);
@@ -45,11 +33,13 @@ const getReports = async (req, res) => {
       }
     );
 
-    /* ----------------------------------- Entering user name  ----------------------------------- */
-    console.log("-- Entering username");
+    /* ----------------------------------- Entering user name and submiting ----------------------------------- */
+    console.log("-- Entering username", id);
     await page.waitForSelector("#username")
-    await page.click("#old-btn-transaccional");
-    console.log("\x1b[0m", "click en entrar");
+    await page.$eval('#username', el => el.value = id);
+
+    console.log("\x1b[0m", "Submited username");
+    await page.click("#btnGo");
 
     /* ----------------------------------- Filling Document # ----------------------------------- */
     console.log("-- Filling Document number & focusing on input");
