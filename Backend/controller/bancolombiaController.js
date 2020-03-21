@@ -49,55 +49,24 @@ const getReports = async (req, res) => {
       $ = cheerio.load(pageContent);
 
       $("#_KEYBRD > tbody > tr > td").each((i, element) => {
-        if (
-          $(element)
-            .text()
-            .trim() == passwordArr[success]
-        ) {
+        if ($(element).text().trim() == passwordArr[success]) {
           cheerioEl = $(element);
           return false;
         }
       });
 
       if (cheerioEl != 0) {
-        const divId = $(cheerioEl)
-          .find("div")
-          .attr("id");
-        console.log("id", divId);
-        // await page.click($(cheerioEl).parent().attr("class"));
+        const divId = $(cheerioEl).find("div").attr("id");
         const [targetElement] = await page.$x(`//div[@id='${divId}']/..`);
         console.log("object", targetElement);
         await targetElement.click();
         success += 1;
       }
     }
-    console.log("Entered password!");
-    // async function enterPassword() {
-    //   let root = HTMLParser.parse(pageContent);
-    //   root = root.querySelectorAll("#_KEYBRD tbody tr");
+    console.log("Typed password!");
+    await page.click("#btnGo");
+    console.log("Submited password!");
 
-    //   const sizeRow = root.querySelector("#_KEYBRD tbody").closest("tr").length;
-    //   const sizeVer = root.querySelector("#_KEYBRD tbody tr").closest("td")
-    //     .length;
-
-    //   success = 0;
-    //   while (success < password.length) {}
-
-    //   //ciclo del tamaño de la contraseña
-    //   for (let i = 0; i < sizeRow; i++) {
-    //     for (let j = 0; j < sizeVer; i++) {
-    //       name = root.querySelectorAll("#_KEYBRD tbody tr")[i].innerHTML; //cada fila
-    //       const num = name.find("div").text()[j]; //cada columna dentro de cada fila
-    //       var car = password.slice(i, i + 1);
-    //       console.log("contraseña dividida");
-    //       if (num == car) {
-    //         console.log("[i+1] caracter encontrado]");
-    //         page.click(".bg_buttonSmall");
-    //         console.log("click dado");
-    //       }
-    //     }
-    //   }
-    // }
   } catch (error) {
     ///
   }
