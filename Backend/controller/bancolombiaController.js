@@ -3,28 +3,43 @@ const fs = require("fs");
 const puppeteer = require("puppeteer");
 const credentials = require("../../credentials.json");
 const cheerio = require("cheerio");
-var HTMLParser = require('node-html-parser');
+var HTMLParser = require("node-html-parser");
 
 const getReports = async (req, res) => {
   const { id, password, url } = credentials.bcol;
-  console.log('\x1b[0m',"[started BANCOLOMBIA]");
+  console.log("\x1b[0m", "[started BANCOLOMBIA]");
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
   let data = [];
   let info = {
     overview: {},
     movements: []
-  }
+  };
+
+  await page.setRequestInterception(true);
+
+  page.on("request", req => {
+    if (
+      req.resourceType() == "stylesheet" ||
+      req.resourceType() == "font" ||
+      req.resourceType() == "image"
+    ) {
+      req.abort();
+    } else {
+      req.continue();
+    }
+  });
+
   try {
     /* ----------------------------------- getting page ----------------------------------- */
 
     await page.goto(url);
-    console.log('\x1b[0m',"goto url");
+    console.log("\x1b[0m", "goto url");
 
-     /* ----------------------------------- clicking login  ----------------------------------- */
- 
+    /* ----------------------------------- clicking login  ----------------------------------- */
+
     await page.click("#old-btn-transaccional");
-    console.log('\x1b[0m',"click en entrar");
+    console.log("\x1b[0m", "click en entrar");
 
     /* ----------------------------------- Filling Document # ----------------------------------- */
     console.log("-- Filling Document number & focusing on input");
@@ -51,33 +66,25 @@ const getReports = async (req, res) => {
 
     async function init() {
       let pageContent = await page.content();
-      const a =  cheerio.load(pageContent);
-      const size =  a("#_KEYBRD tbody tr").closest('tr').length
-      
-      for (let i = 0; i < size; i++) { 
-        for (let j = 0; j < 3; i++){  
-          a('#_KEYBRD tbody tr').each((i,el) => {
-            const num = a(el).find('div.text').text();
-            var car = password.slice(i,i+1);
+      const a = cheerio.load(pageContent);
+      const size = a("#_KEYBRD tbody tr").closest("tr").length;
+
+      for (let i = 0; i < size; i++) {
+        for (let j = 0; j < 3; i++) {
+          a("#_KEYBRD tbody tr").each((i, el) => {
+            const num = a(el)
+              .find("div.text")
+              .text();
+            var car = password.slice(i, i + 1);
             if (num == car) {
               page.click(".bg_buttonSmall");
             }
-        })        
-        
-
+          });
         }
       }
-  }   
-  init();
+    }
+    init();
     /*------------------------------------------*/
-    
-    
-
-
-
-
-
-
 
     /* ----------------------------------- PASSWORD INPUT ----------------------------------- */
     /*console.log("   -- PASSWORD INPUT");
@@ -115,7 +122,9 @@ const getReports = async (req, res) => {
     console.log("[ PREVENTIVE screenshot & content]");
     console.log("               ---                ");
 
-    await page.screenshot({ path: `temp/bcolombia/preventive/preventiveLoggedIn#-#${id}.png` });
+    await page.screenshot({
+      path: `temp/bcolombia/preventive/preventiveLoggedIn#-#${id}.png`
+    });
     let pageContent = await page.content();
     fs.writeFile(
       `temp/bcolombia/preventive/preventiveLoggedIn#-#${id}.html`,
@@ -126,7 +135,6 @@ const getReports = async (req, res) => {
         console.log(`preventiveLoggedIn#-#${id} been saved!`);
       }
     );
-    
 
     /* ----------------------------------- checking for error ----------------------------------- */
     console.log("[ --- Checking for errors ---]");
@@ -150,25 +158,25 @@ const getReports = async (req, res) => {
 
     /* ----------------------------------- taking screenshot and grabing content ----------------------------------- */
     console.log('Waiting for ".type-one" ...');
-    await page.waitForSelector('.type-one', {timeout: 120000})
+    await page.waitForSelector(".type-one", { timeout: 120000 });
     pageContent = await page.content();
-    console.log(`[taking LoggedInScreenshot#-#${id}]`);    
-    
+    console.log(`[taking LoggedInScreenshot#-#${id}]`);
+
     console.log(" --- Writing html file --- ");
-    fs.writeFileSync(`temp/bcolombia/in/in#-#${id}.html`, pageContent, "utf8", err => {
+    fs.writeFileSync(
+      `temp/bcolombia/in/in#-#${id}.html`,
+      pageContent,
+      "utf8",
+      err => {
         if (err) throw err;
         console.log(`---- LoggedIn#-#${id} has been saved!`);
       }
     );
 
     /* ----------------------------------- grabing basic info from html file  ----------------------------------- */
-    
-            
-    /* ----------------------------------- loging out and closing browser ----------------------------------- */
- 
-    
-  } catch (error) {
 
+    /* ----------------------------------- loging out and closing browser ----------------------------------- */
+  } catch (error) {
     ///
   }
 };

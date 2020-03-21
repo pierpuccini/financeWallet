@@ -3,18 +3,33 @@ const fs = require("fs");
 const puppeteer = require("puppeteer");
 const credentials = require("../../credentials.json");
 const cheerio = require("cheerio");
-var HTMLParser = require('node-html-parser');
+var HTMLParser = require("node-html-parser");
 
 const getReports = async (req, res) => {
   const { id, password, url } = credentials.davi;
-  console.log('\x1b[0m',"[started DAVI]");
+  console.log("\x1b[0m", "[started DAVI]");
   const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
   let data = [];
   let info = {
     overview: {},
     movements: []
-  }
+  };
+
+  await page.setRequestInterception(true);
+
+  page.on("request", req => {
+    if (
+      req.resourceType() == "stylesheet" ||
+      req.resourceType() == "font" ||
+      req.resourceType() == "image"
+    ) {
+      req.abort();
+    } else {
+      req.continue();
+    }
+  });
+
   try {
     /* ----------------------------------- getting page ----------------------------------- */
     await page.goto(url);
@@ -96,7 +111,9 @@ const getReports = async (req, res) => {
     console.log("[ PREVENTIVE screenshot & content]");
     console.log("               ---                ");
 
-    await page.screenshot({ path: `temp/davi/preventive/preventiveLoggedIn#-#${id}.png` });
+    await page.screenshot({
+      path: `temp/davi/preventive/preventiveLoggedIn#-#${id}.png`
+    });
     let pageContent = await page.content();
     fs.writeFile(
       `temp/davi/preventive/preventiveLoggedIn#-#${id}.html`,
@@ -107,7 +124,6 @@ const getReports = async (req, res) => {
         console.log(`preventiveLoggedIn#-#${id} been saved!`);
       }
     );
-    
 
     /* ----------------------------------- checking for error ----------------------------------- */
     console.log("[ --- Checking for errors ---]");
@@ -131,12 +147,12 @@ const getReports = async (req, res) => {
 
     /* ----------------------------------- taking screenshot and grabing content ----------------------------------- */
     console.log('Waiting for ".type-one" ...');
-    await page.waitForSelector('.type-one', {
+    await page.waitForSelector(".type-one", {
       timeout: 120000
-    })
+    });
     pageContent = await page.content();
-    console.log(`[taking LoggedInScreenshot#-#${id}]`);    
-    
+    console.log(`[taking LoggedInScreenshot#-#${id}]`);
+
     console.log(" --- Writing html file --- ");
     fs.writeFileSync(
       `temp/davi/in/in#-#${id}.html`,
@@ -150,7 +166,7 @@ const getReports = async (req, res) => {
 
     /* ----------------------------------- grabing basic info from html file  ----------------------------------- */
     console.log("   Getting basic info ...");
-    const overview = basicInfo(id)
+    const overview = basicInfo(id);
     info.overview = overview;
     fs.writeFile(
       `temp/davi/overview/overview#-#${id}.txt`,
@@ -164,79 +180,105 @@ const getReports = async (req, res) => {
 
     let $ = cheerio.load(pageContent);
 
-    let accountId = $(".type-one tbody tr td a").attr('id').split(':');
+    let accountId = $(".type-one tbody tr td a")
+      .attr("id")
+      .split(":");
     let accountDivIds = [];
-    let accounts = $(".type-one tbody").closest('tr').length
-    for (let i = 0; i < accounts; i++) {    
-      let divId = accountId
-      divId[2] = i
-      accountDivIds.push(divId.join('\\:'))
+    let accounts = $(".type-one tbody").closest("tr").length;
+    for (let i = 0; i < accounts; i++) {
+      let divId = accountId;
+      divId[2] = i;
+      accountDivIds.push(divId.join("\\:"));
     }
 
     for (let i = 0; i < accountDivIds.length; i++) {
       await page.waitForSelector(`#${accountDivIds[i]}`, {
         timeout: 120000
       });
-      await page.click(`#${accountDivIds[i]}`)
+      await page.click(`#${accountDivIds[i]}`);
       /* ----------------------------------- waiting for iframe ----------------------------------- */
       console.log("Waiting for iframe ...");
       await page.waitForSelector("#dashboardform\\:dynamicIframe iframe", {
         timeout: 120000
       });
-      const elementHandleDetails = await page.$("#dashboardform\\:dynamicIframe iframe");
-      
+      const elementHandleDetails = await page.$(
+        "#dashboardform\\:dynamicIframe iframe"
+      );
+
       /* ----------------------------------- iFrame Loaded ----------------------------------- */
       console.log("[*** iFrame Loaded ***]");
       const frameContentDetails = await elementHandleDetails.contentFrame();
       await frameContentDetails.waitForXPath("//a[contains(., 'Últimos')]", {
         timeout: 120000
-      });      
-      console.log('\x1b[33m','*** Last movements loaded ***');
-      let movements = await frameContentDetails.$x("//a[contains(., 'Últimos')]");
+      });
+      console.log("\x1b[33m", "*** Last movements loaded ***");
+      let movements = await frameContentDetails.$x(
+        "//a[contains(., 'Últimos')]"
+      );
 
       if (movements.length > 0) {
         await movements[0].click();
         await frameContentDetails.waitFor(15000);
-        let movementsTable = await frameContentDetails.$eval('center form', (element) => element.innerHTML)
+        let movementsTable = await frameContentDetails.$eval(
+          "center form",
+          element => element.innerHTML
+        );
         let $ = cheerio.load(movementsTable);
-        const result = $("tr").map((i, element) => ({
-          date: $(element).find('td:nth-of-type(1)').text().trim(),
-          amount: $(element).find('td:nth-of-type(2)').text().trim(),
-          id: $(element).find('td:nth-of-type(3)').text().trim(),
-          description: $(element).find('td:nth-of-type(4)').text().trim(),
-        })).get()
+        const result = $("tr")
+          .map((i, element) => ({
+            date: $(element)
+              .find("td:nth-of-type(1)")
+              .text()
+              .trim(),
+            amount: $(element)
+              .find("td:nth-of-type(2)")
+              .text()
+              .trim(),
+            id: $(element)
+              .find("td:nth-of-type(3)")
+              .text()
+              .trim(),
+            description: $(element)
+              .find("td:nth-of-type(4)")
+              .text()
+              .trim()
+          }))
+          .get();
         info.movements.push(result);
-        fs.writeFileSync(`temp/davi/movements/movementsData${i}#-#${id}.txt`, JSON.stringify(result) ,"utf8",err => {
-          if (err) throw err;
+        fs.writeFileSync(
+          `temp/davi/movements/movementsData${i}#-#${id}.txt`,
+          JSON.stringify(result),
+          "utf8",
+          err => {
+            if (err) throw err;
             console.log(`---- movementsTable${i}#-#${id} has been saved!`);
           }
-        );       
+        );
       } else {
         throw new Error("Link not found");
       }
-    
-      console.log('*** Succesfully retrevived past movements ***');
-      await page.click('#dashboardform\\:goToResumen')      
+
+      console.log("*** Succesfully retrevived past movements ***");
+      await page.click("#dashboardform\\:goToResumen");
     }
-            
+
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
     console.log("                              ");
-    console.log('\x1b[33m',"[ --- Closing --- ]");
+    console.log("\x1b[33m", "[ --- Closing --- ]");
     console.log("                              ");
     await page.click("#dashboardform\\:cerrarSesion");
     await page.screenshot({ path: `temp/davi/LoggedScreenshot#-#${id}.png` });
-    console.log('\x1b[0m');    
-    console.log('\x1b[32m',"[-- session closed! --]");
+    console.log("\x1b[0m");
+    console.log("\x1b[32m", "[-- session closed! --]");
     console.log("[Sending data to postman or api caller]");
     res.send(info);
-    await browser.close();        
-    console.log('\x1b[32m',"[-- end succesfully--]");
-    console.log('\x1b[0m');
-    
+    await browser.close();
+    console.log("\x1b[32m", "[-- end succesfully--]");
+    console.log("\x1b[0m");
   } catch (error) {
-    console.log('\x1b[31m','!!! error in catch !!!', error);
+    console.log("\x1b[31m", "!!! error in catch !!!", error);
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
-    console.log('data in catch', data.length);
+    console.log("data in catch", data.length);
     if (data.length === 0 || error.code !== "already-logged-in") {
       await page.click("#dashboardform\\:cerrarSesion");
       await page.waitForSelector("#personas-ingresar");
@@ -253,12 +295,12 @@ const getReports = async (req, res) => {
       res.send({ code: "server error", message: error });
     }
 
-    console.log('\x1b[31m',"[-- end with error --]");
-    console.log('\x1b[0m');
+    console.log("\x1b[31m", "[-- end with error --]");
+    console.log("\x1b[0m");
   }
 };
 
-const basicInfo = (id) => {
+const basicInfo = id => {
   console.log("[ --- parsing report --- ]");
   const d = fs.readFileSync(
     path.resolve(`temp/davi/in/in#-#${id}.html`),
@@ -315,14 +357,28 @@ const test = (req, res) => {
     }
   );
   let $ = cheerio.load(pageContent);
-  const result = $("tr").map((i, element) => ({
-    date: $(element).find('td:nth-of-type(1)').text().trim(),
-    amount: $(element).find('td:nth-of-type(2)').text().trim(),
-    id: $(element).find('td:nth-of-type(3)').text().trim(),
-    description: $(element).find('td:nth-of-type(4)').text().trim(),
-  })).get()
-  console.log(JSON.stringify(result))
-  res.send(result)
-}
+  const result = $("tr")
+    .map((i, element) => ({
+      date: $(element)
+        .find("td:nth-of-type(1)")
+        .text()
+        .trim(),
+      amount: $(element)
+        .find("td:nth-of-type(2)")
+        .text()
+        .trim(),
+      id: $(element)
+        .find("td:nth-of-type(3)")
+        .text()
+        .trim(),
+      description: $(element)
+        .find("td:nth-of-type(4)")
+        .text()
+        .trim()
+    }))
+    .get();
+  console.log(JSON.stringify(result));
+  res.send(result);
+};
 
 module.exports = { getReports, test };
