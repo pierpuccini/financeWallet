@@ -24,6 +24,7 @@ The test feature both Backend and Frontend in the same repo. In order to access 
         ├── YOUR_DESIRED STRUCTURE
     ```
     *Note: Please add to all generated files the id for the account
+6. In order to view chromium in real time please add ```{ headless: false}``` to your puppeteer launch
     
 **Frontend** 
 1. Locate directory with: `cd frontend`
