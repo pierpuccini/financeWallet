@@ -34,7 +34,7 @@ const getReports = async (req, res) => {
     /* ----------------------------------- Entering user name and submiting ----------------------------------- */
     console.log("-- Entering username", id);
     await page.waitForSelector("#username")
-    await page.$eval('#username', el => el.value = id);
+    await page.type('#username', id, {delay: 100});
 
     console.log("\x1b[0m", "Submited username");
     await page.click("#btnGo");
