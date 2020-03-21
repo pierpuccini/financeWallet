@@ -8,10 +8,12 @@ The test feature both Backend and Frontend in the same repo. In order to access 
 * _If you wish to test please run:_ `npm run-script test`
 4. Add to the root folder a `credentials.json` file with the following structure: 
     ``` 
-    {
-        "id": YOUR_ACC_ID,
-        "password": YOUR_ACC_PASSWORD,
-        "url": YOUR_BANK_URL
+    { 
+        "BANK_ABREVIATION": {
+            "id": "YOUR_ACC_ID",
+            "password": YOUR_ACC_PASSWORD,
+            "url": "YOUR_BANK_URL"
+        }
     }
     ```
     *keep in mind that this file doesn't save due to git ignore.
