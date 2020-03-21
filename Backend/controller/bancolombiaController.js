@@ -9,9 +9,13 @@ const getReports = async (req, res) => {
   const { id, password, url } = credentials.bcol;
   console.log("\x1b[0m", "[started BANCOLOMBIA]");
   /* NOTE: Headless FALSE shows progress in real time */
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({
+    headless: false,
+    defaultViewport: null
+  });
   const page = await browser.newPage();
   let data = [];
+  let $;
   let info = {
     overview: {},
     movements: []
@@ -23,137 +27,70 @@ const getReports = async (req, res) => {
 
     /* ----------------------------------- Entering user name and submiting ----------------------------------- */
     console.log("-- Entering username", id);
-    await page.waitForSelector("#username")
-    await page.type('#username', id, {delay: 100});
+    await page.waitForSelector("#username");
+    await page.type("#username", id, { delay: 100 });
 
     console.log("\x1b[0m", "Submited username");
     await page.click("#btnGo");
 
-  /* ----------------------------------- Filling out user password with keypad ----------------------------------- */
-
+    /* ----------------------------------- Filling out user password with keypad ----------------------------------- */
+    await page.waitForSelector("#_KEYBRD");
     let pageContent = await page.content();
-    fs.writeFile(
-      `temp/bcol/page.html`,
-      pageContent,
-      "utf8",
-      err => {
-        if (err) throw err;
-        console.log(`page saved!`);
+    fs.writeFile(`temp/bcol/page.html`, pageContent, "utf8", err => {
+      if (err) throw err;
+    });
+    console.log("Password page loaded");    
+    
+    let success = 0, element;
+    let passwordArr = password.toString().split('')
+    
+    while (success < passwordArr.length) {
+      $ = cheerio.load(pageContent);
+
+      cheerioEl = $("#_KEYBRD > tbody > tr > td").map((i, element) => {
+        if ($(element).text() === passwordArr[success]) {
+          console.log('in first if');
+          console.log('text', $(element).text());
+          console.log('pass', passwordArr[success]);
+          return $(element)
+        }
+        return -1
+      })
+      console.log('cheerioEl',cheerioEl);
+      if (cheerioEl) {
+        console.log('id', $(cheerioEl).find('div').attr('id'));
+        await page.click($(cheerioEl).attr('id'))
+        success += 1
       }
-    );
+      console.log('success',success);
+    }
+    console.log('exited while');
+    // async function enterPassword() {
+    //   let root = HTMLParser.parse(pageContent);
+    //   root = root.querySelectorAll("#_KEYBRD tbody tr");
 
-    // async function init() {
-    //   let pageContent = await page.content();
-    //   const a = cheerio.load(pageContent);
-    //   const size = a("#_KEYBRD tbody tr").closest("tr").length;
+    //   const sizeRow = root.querySelector("#_KEYBRD tbody").closest("tr").length;
+    //   const sizeVer = root.querySelector("#_KEYBRD tbody tr").closest("td")
+    //     .length;
 
-    //   for (let i = 0; i < size; i++) {
-    //     for (let j = 0; j < 3; i++) {
-    //       a("#_KEYBRD tbody tr").each((i, el) => {
-    //         const num = a(el)
-    //           .find("div.text")
-    //           .text();
-    //         var car = password.slice(i, i + 1);
-    //         if (num == car) {
-    //           page.click(".bg_buttonSmall");
-    //         }
-    //       });
+    //   success = 0;
+    //   while (success < password.length) {}
+
+    //   //ciclo del tamaño de la contraseña
+    //   for (let i = 0; i < sizeRow; i++) {
+    //     for (let j = 0; j < sizeVer; i++) {
+    //       name = root.querySelectorAll("#_KEYBRD tbody tr")[i].innerHTML; //cada fila
+    //       const num = name.find("div").text()[j]; //cada columna dentro de cada fila
+    //       var car = password.slice(i, i + 1);
+    //       console.log("contraseña dividida");
+    //       if (num == car) {
+    //         console.log("[i+1] caracter encontrado]");
+    //         page.click(".bg_buttonSmall");
+    //         console.log("click dado");
+    //       }
     //     }
     //   }
     // }
-    init();
-    /*------------------------------------------*/
-
-    /* ----------------------------------- PASSWORD INPUT ----------------------------------- */
-    /*console.log("   -- PASSWORD INPUT");
-    await frameContent.waitForSelector("#password");
-    await page.keyboard.type(password.toString(), { delay: 100 });
-    await frameContent.$eval(
-      "password",
-      (el, value) => (el.value = value),
-      password
-    );
-    if ((await page.$("#closeButton")) !== null) {
-      console.log("[! closing pop up !]");
-      await page.click("#closeButton");
-    }
-
-    /* ----------------------------------- SUBMITING PASSWORD ----------------------------------- */
-    console.log("!!! SUBMITING PASSWORD !!!");
-    await frameContent.click("#btnGo");
-
-    if ((await page.$("#closeButton")) !== null) {
-      console.log("[! closing pop up !]");
-      await page.click("#closeButton");
-    }
-
-    await frameContent.waitFor(15000);
-    console.log("... waited 15000 ms");
-
-    if ((await page.$("#closeButton")) !== null) {
-      console.log("[! closing pop up !]");
-      await page.click("#closeButton");
-    }
-
-    /* ----------------------------------- PREVENTIVE screenshot & content ----------------------------------- */
-    console.log("               ---                ");
-    console.log("[ PREVENTIVE screenshot & content]");
-    console.log("               ---                ");
-
-    await page.screenshot({
-      path: `temp/bcolombia/preventive/preventiveLoggedIn#-#${id}.png`
-    });
-    // let pageContent = await page.content();
-    // fs.writeFile(
-    //   `temp/bcolombia/preventive/preventiveLoggedIn#-#${id}.html`,
-    //   pageContent,
-    //   "utf8",
-    //   err => {
-    //     if (err) throw err;
-    //     console.log(`preventiveLoggedIn#-#${id} been saved!`);
-    //   }
-    // );
-
-    /* ----------------------------------- checking for error ----------------------------------- */
-    console.log("[ --- Checking for errors ---]");
-    if (!frameContent.isDetached()) {
-      if ((await frameContent.$("#divMessageCodigo")) !== null) {
-        console.log("[! ERROR PRESENT !]");
-        data = await frameContent.evaluate(() => {
-          const tds = Array.from(
-            document.querySelectorAll(".tablaMessage tbody tr td")
-          );
-          return tds.map(td => td.textContent);
-        });
-        content = await frameContent.content();
-        await browser.close();
-        console.log("[Sending error to postman or api caller]");
-        if (data.length > 0) {
-          throw { code: "already-logged-in", message: data[1] };
-        }
-      }
-    }
-
-    /* ----------------------------------- taking screenshot and grabing content ----------------------------------- */
-    console.log('Waiting for ".type-one" ...');
-    await page.waitForSelector(".type-one", { timeout: 120000 });
-    pageContent = await page.content();
-    console.log(`[taking LoggedInScreenshot#-#${id}]`);
-
-    console.log(" --- Writing html file --- ");
-    fs.writeFileSync(
-      `temp/bcolombia/in/in#-#${id}.html`,
-      pageContent,
-      "utf8",
-      err => {
-        if (err) throw err;
-        console.log(`---- LoggedIn#-#${id} has been saved!`);
-      }
-    );
-
-    /* ----------------------------------- grabing basic info from html file  ----------------------------------- */
-
-    /* ----------------------------------- loging out and closing browser ----------------------------------- */
   } catch (error) {
     ///
   }
