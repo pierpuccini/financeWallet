@@ -2,7 +2,7 @@
 |--------------------------------------------------------------------------
 | Route Files
 |--------------------------------------------------------------------------
-|File for handle route that api call asdada
+|File for handle route that api call
    
 */
 const express = require("express");
