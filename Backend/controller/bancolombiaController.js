@@ -17,8 +17,6 @@ const getReports = async (req, res) => {
     movements: []
   };
 
-  await page.setRequestInterception(true);
-
   try {
     /* ----------------------------------- getting page ----------------------------------- */
     await page.goto(url);
