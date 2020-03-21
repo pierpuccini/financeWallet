@@ -6,9 +6,9 @@ const cheerio = require("cheerio");
 var HTMLParser = require('node-html-parser');
 
 const getReports = async (req, res) => {
-  const { id, password, url } = credentials;
+  const { id, password, url } = credentials.davi;
   console.log('\x1b[0m',"[started DAVI]");
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
   let data = [];
   let info = {

@@ -6,9 +6,9 @@ const cheerio = require("cheerio");
 var HTMLParser = require('node-html-parser');
 
 const getReports = async (req, res) => {
-  const { id, password, url } = credentials;
+  const { id, password, url } = credentials.bcol;
   console.log('\x1b[0m',"[started BANCOLOMBIA]");
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ headless: false });
   const page = await browser.newPage();
   let data = [];
   let info = {
@@ -48,9 +48,6 @@ const getReports = async (req, res) => {
       console.log("[! closing pop up !]");
       await page.click("#btnGo");
     }
-
-
-    
 
     async function init() {
       let pageContent = await page.content();
@@ -176,7 +173,4 @@ const getReports = async (req, res) => {
   }
 };
 
-
-
-
-module.exports = { getReports};
+module.exports = { getReports };
