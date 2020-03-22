@@ -92,6 +92,8 @@ const getReports = async (req, res) => {
     await frameContent.click('#link_LogOut_SVP1')
     console.log('Opened logout modal');
     await frameContent.waitForSelector('#confirmationLogout')
+    await frameContent.waitForSelector('.btn_Succed_Popup')
+    await frameContent.click('.btn_Succed_Popup')
     await browser.close();
     console.log('Browser closed');
     res.send('success');
