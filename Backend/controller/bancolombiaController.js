@@ -11,7 +11,8 @@ const getReports = async (req, res) => {
   /* NOTE: Headless FALSE shows progress in real time */
   const browser = await puppeteer.launch({
     headless: false,
-    defaultViewport: null
+    defaultViewport: null,
+    slowMo: 10
   });
   const page = await browser.newPage();
   let data = [];
