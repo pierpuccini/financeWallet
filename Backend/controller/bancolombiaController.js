@@ -3,7 +3,6 @@ const fs = require("fs");
 const puppeteer = require("puppeteer");
 const credentials = require("../../credentials.json");
 const cheerio = require("cheerio");
-var HTMLParser = require("node-html-parser");
 
 const getReports = async (req, res) => {
   const { id, password, url } = credentials.bcol;
@@ -15,6 +14,8 @@ const getReports = async (req, res) => {
     slowMo: 10
   });
   const page = await browser.newPage();
+  await page.setUserAgent('5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36');
+
   let data = [];
   let $;
   let info = {
@@ -27,7 +28,7 @@ const getReports = async (req, res) => {
     await page.goto(url);
 
     /* ----------------------------------- Entering user name and submiting ----------------------------------- */
-    console.log("-- Entering username", id);
+    console.log("-- Entering username");
     await page.waitForSelector("#username");
     await page.type("#username", id, { delay: 100 });
 
@@ -36,18 +37,16 @@ const getReports = async (req, res) => {
 
     /* ----------------------------------- Filling out user password with keypad ----------------------------------- */
     await page.waitForSelector("#_KEYBRD");
-    let pageContent = await page.content();
-    fs.writeFile(`temp/bcol/page.html`, pageContent, "utf8", err => {
-      if (err) throw err;
-    });
     console.log("Password page loaded");
+
+    let logginContent = await page.content();
 
     let success = 0,
       cheerioEl;
     let passwordArr = password.toString().split("");
 
     while (success < passwordArr.length) {
-      $ = cheerio.load(pageContent);
+      $ = cheerio.load(logginContent);
 
       $("#_KEYBRD > tbody > tr > td").each((i, element) => {
         if ($(element).text().trim() == passwordArr[success]) {
@@ -59,7 +58,6 @@ const getReports = async (req, res) => {
       if (cheerioEl != 0) {
         const divId = $(cheerioEl).find("div").attr("id");
         const [targetElement] = await page.$x(`//div[@id='${divId}']/..`);
-        console.log("object", targetElement);
         await targetElement.click();
         success += 1;
       }
@@ -68,6 +66,35 @@ const getReports = async (req, res) => {
     await page.click("#btnGo");
     console.log("Submited password!");
 
+    await page.waitForSelector("#ifrm");
+    const elementHandle = await page.$("#ifrm");
+    /* ----------------------------------- iFrame Loaded ----------------------------------- */
+    console.log("         ---         ");
+    console.log("*** iFrame Loaded ***");
+    console.log("         ---         ");
+    const frameContent = await elementHandle.contentFrame();
+   
+    await frameContent.waitForSelector('#link_LogOut_SVP1');
+
+    console.log("Succesfully logged in!");
+
+    const content = await frameContent.content()
+    fs.writeFile(`temp/bcol/page.html`, content, "utf8",
+      err => {
+        if (err) throw err;
+      }
+    ); 
+
+    /* ----------------------------------- loging out and closing browser ----------------------------------- */
+    console.log("                              ");
+    console.log("\x1b[33m", "[ --- Closing --- ]");
+    console.log("                              ");
+    await frameContent.click('#link_LogOut_SVP1')
+    console.log('Opened logout modal');
+    await frameContent.waitForSelector('#confirmationLogout')
+    await browser.close();
+    console.log('Browser closed');
+    res.send('success');
   } catch (error) {
     ///
   }
