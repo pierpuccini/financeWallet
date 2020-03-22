@@ -79,7 +79,7 @@ const getReports = async (req, res) => {
     console.log("Succesfully logged in!");
 
     const content = await frameContent.content()
-    fs.writeFile(`temp/bcol/page.html`, content, "utf8",
+    fs.writeFile(`temp/bcol/content-page.html`, content, "utf8",
       err => {
         if (err) throw err;
       }
