@@ -27,7 +27,6 @@ const getReports = async (req, res) => {
 	try {
 		/* ----------------------------------- getting page ----------------------------------- */
 		await page.goto(url);
-
 		/* ----------------------------------- Entering user name and submiting ----------------------------------- */
 		console.log("-- Entering username");
 		await page.waitForSelector("#username");
@@ -95,20 +94,20 @@ const getReports = async (req, res) => {
 		$ = cheerio.load(content);			
 		let IdAccount =  $("#accaccount0").attr("id");
 		let siblingAccounts = $("#accaccount0").siblings().length;
-
-		if (siblingAccounts == 0) {
-		let IdAccountDiv = IdAccount.split("");
 		let accountIds = [];
-		for (let i = 0; i < siblingAccounts; i++) {
+
+		if (siblingAccounts > 0) {
+		let IdAccountDiv = IdAccount.split("");		
+		for (let i = 0; i <= siblingAccounts; i++) {
 			let divAccId = IdAccountDiv;
 			divAccId[10] = i;		
 			accountIds.push(divAccId.join(""));		
 		}
 		} else {
-		accountIds = IdAccount;
+			accountIds.push(IdAccount);
 		}
 
-		
+
 		const basicInfo = id => {
 			console.log("[ --- parsing report --- ]");
 			const d = fs.readFileSync(
@@ -121,24 +120,24 @@ const getReports = async (req, res) => {
 			
 			/* TODO: migrate to cheerio */
 			let root = HTMLParser.parse(d);
-			root = root.querySelectorAll(
-			  "#accaccount0"
-			);
-			let servicesInfo = [];
-			root.forEach(services => {
-				typeAcc = services.querySelectorAll("div")[0].text;
-				accNum = services.querySelectorAll("span")[0].text;
-				name = typeAcc + ' ' + accNum ;
-				let account = {};
-				account = {
-					available: services.querySelectorAll("div")[2].text
-					
-				};
-			  
-			  servicesInfo = [...servicesInfo, { name, account }];
-			});
-		  
-			return servicesInfo;
+			for (i = 0; i < accountIds.length ; i++){
+				root = root.querySelectorAll(					
+					`#${accountIds[i]}` //accaccount0,accaccount1...
+				);
+				let servicesInfo = [];
+				root.forEach(services => {
+					typeAcc = services.querySelectorAll("div")[0].text;
+					accNum = services.querySelectorAll("span")[0].text;
+					name = typeAcc + ' ' + accNum ;
+					let account = {};
+					account = {
+						available: services.querySelectorAll("div")[2].text						
+					};									
+					servicesInfo = [...servicesInfo, { name, account }];
+				});
+			
+				return servicesInfo;
+		};
 		};
 
 		console.log("   Getting basic info ...");
@@ -171,13 +170,4 @@ const getReports = async (req, res) => {
 		///
 	}
 };
-
-
-
-
-
-
-
-
-
 module.exports = { getReports };
