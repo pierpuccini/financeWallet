@@ -84,17 +84,37 @@ const getReports = async (req, res) => {
 
     await frameContent.waitForSelector("#numACCaccount");
 
-    console.log("Succesfully logged in!");
+    console.log("Succesfully logged in!");    
 
+    
+
+    await frameContent.waitForSelector("#accaccount0");
+    await frameContent.waitForSelector("#date_cards_option");
+    await frameContent.click("#date_cards_option") // Clicking the link will indirectly cause a navigation
+    await frameContent.waitForSelector("#carcards0");
     const content = await frameContent.content();
     fs.writeFile(`temp/bcol/in/content-page.html`, content, "utf8", err => {
       if (err) throw err;
     });
 
-    /* ----------------------------------- getting accounts ----------------------------------- */
-
-    await frameContent.waitForSelector("#accaccount0");
     $ = cheerio.load(content);
+
+    let CardId = $("#carcards0").attr("id");
+    let siblingCards = $("#carcards0").siblings().length;
+    let CardsIds = [];
+
+    if (siblingCards > 0) {
+      let CardIdDiv = CardId.split("");
+      for (let i = 0; i <= siblingCards; i++) {
+        let divCardId = CardIdDiv;
+        divCardId[8] = i;
+        CardsIds.push(divCardId.join(""));
+      }
+    } else {
+      CardsIds.push(CardId);
+    }
+
+    
     let IdAccount = $("#accaccount0").attr("id");
     let siblingAccounts = $("#accaccount0").siblings().length;
     let accountIds = [];
@@ -159,19 +179,8 @@ const getReports = async (req, res) => {
 
     /* ----------------------------------- getting credit cards ----------------------------------- */
 
-    await frameContent.waitForSelector("#date_cards_option");
-    console.log("click encontrado");
-    const [response] = await Promise.all([
-      frameContent.waitForNavigation({ waitUntil: "domcontentloaded" }), // The navigation promise resolves after navigation has finished
-      frameContent.click("#date_cards_option") // Clicking the link will indirectly cause a navigation
-    ]);
-    console.log("click dado");
-    await frameContent.waitForSelector("#carcards0");
+    
 
-    const contentcc = await frameContent.content();
-    fs.writeFile(`temp/bcol/in/contentcc.html`, contentcc, "utf8", err => {
-      if (err) throw err;
-    });
 
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
     console.log("                              ");
