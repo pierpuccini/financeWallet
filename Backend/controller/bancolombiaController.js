@@ -86,16 +86,16 @@ const getReports = async (req, res) => {
 
     console.log("Succesfully logged in!");    
 
-    
-
     await frameContent.waitForSelector("#accaccount0");
     await frameContent.waitForSelector("#date_cards_option");
-    await frameContent.click("#date_cards_option") // Clicking the link will indirectly cause a navigation
+    await frameContent.$eval("#date_cards_option", element => element.click()); // Clicking the link will indirectly cause a navigation
+    console.log('Clicked on card options');
     await frameContent.waitForSelector("#carcards0");
+    console.log("waited for cards to load");        
     const content = await frameContent.content();
-    fs.writeFile(`temp/bcol/in/content-page.html`, content, "utf8", err => {
-      if (err) throw err;
-    });
+      fs.writeFile(__dirname + `/../temp/bcol/in/content-page.html`, content, "utf8", err => {
+        if (err) throw err;
+      });
 
     $ = cheerio.load(content);
 
@@ -166,9 +166,9 @@ const getReports = async (req, res) => {
 
     console.log("   Getting basic info ...");
     const overview = basicInfo(id);
-    info.overview = overview;
+    info.overview = JSON.stringify(overview);
     fs.writeFile(
-      `temp/bcol/overview/overview#-#${id}.txt`,
+      __dirname + `/../temp/bcol/overview/overview#-#${id}.txt`,
       JSON.stringify(overview),
       "utf8",
       err => {
@@ -194,7 +194,7 @@ const getReports = async (req, res) => {
     //await frameContent.click('.btn_Succed_Popup')
     await browser.close();
     console.log("Browser closed");
-    res.send("success");
+    res.send(info);
   } catch (error) {
     ///
   }
