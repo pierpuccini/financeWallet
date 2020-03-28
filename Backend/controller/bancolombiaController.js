@@ -90,6 +90,9 @@ const getReports = async (req, res) => {
 		});
     
 
+		/* ----------------------------------- getting accounts ----------------------------------- */
+		
+
 		await frameContent.waitForSelector('#accaccount0')
 		$ = cheerio.load(content);			
 		let IdAccount =  $("#accaccount0").attr("id");
@@ -108,6 +111,10 @@ const getReports = async (req, res) => {
 		}
 
 
+		
+
+		/* ----------------------------------- getting accounts' info ----------------------------------- */
+		
 		const basicInfo = id => {
 			console.log("[ --- parsing report --- ]");
 			const d = fs.readFileSync(
@@ -137,7 +144,7 @@ const getReports = async (req, res) => {
 				});
 			
 				return servicesInfo;
-		};
+			};
 		};
 
 		console.log("   Getting basic info ...");
@@ -151,7 +158,23 @@ const getReports = async (req, res) => {
 				if (err) throw err;
 				console.log(`overview#-#${id} been saved!`);
 			}
-			);
+		);		
+
+		/* ----------------------------------- getting credit cards ----------------------------------- */
+		
+		await frameContent.waitForSelector('#date_cards_option');
+		console.log('click encontrado');
+		const [response] = await Promise.all([
+			frameContent.waitForNavigation({waitUntil: 'domcontentloaded'}), // The navigation promise resolves after navigation has finished
+			frameContent.click('#date_cards_option'), // Clicking the link will indirectly cause a navigation
+		]);
+		console.log('click dado');
+		await frameContent.waitForSelector("#carcards0");
+
+		const contentcc = await frameContent.content();
+		fs.writeFile(`temp/bcol/in/contentcc.html`, contentcc, "utf8", err => {
+			if (err) throw err;
+		});
 		  
 		/* ----------------------------------- loging out and closing browser ----------------------------------- */
 		console.log("                              ");
