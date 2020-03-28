@@ -22,23 +22,23 @@ router.post("/text", (req, res) => {
 });
 
 /* Routes & temp path creation for davi */
-fs.mkdirSync("./temp/davi",{recursive: true});
-fs.mkdirSync("./temp/davi/in",{recursive: true});
-fs.mkdirSync("./temp/davi/movements",{recursive: true});
-fs.mkdirSync("./temp/davi/overview",{recursive: true});
+fs.mkdirSync(__dirname + "/../temp/davi",{recursive: true});
+fs.mkdirSync(__dirname + "/../temp/davi/in",{recursive: true});
+fs.mkdirSync(__dirname + "/../temp/davi/movements",{recursive: true});
+fs.mkdirSync(__dirname + "/../temp/davi/overview",{recursive: true});
 //TODO: THIS WILL BE REMOVED
-fs.mkdirSync("./temp/davi/preventive",{recursive: true});
+fs.mkdirSync(__dirname + "/../temp/davi/preventive",{recursive: true});
 
 router.get("/davi-get-reports", daviviendaController.getReports);
 router.get("/test", daviviendaController.test);
 
 /* Routes & temp path creation for bcol */
-fs.mkdirSync("./temp/bcol",{recursive: true});
-fs.mkdirSync("./temp/bcol/in",{recursive: true});
-fs.mkdirSync("./temp/bcol/movements",{recursive: true});
-fs.mkdirSync("./temp/bcol/overview",{recursive: true});
+fs.mkdirSync(__dirname + "/../temp/bcol",{recursive: true});
+fs.mkdirSync(__dirname + "/../temp/bcol/in",{recursive: true});
+fs.mkdirSync(__dirname + "/../temp/bcol/movements",{recursive: true});
+fs.mkdirSync(__dirname + "/../temp/bcol/overview",{recursive: true});
 //TODO: THIS WILL BE REMOVED
-fs.mkdirSync("./temp/bcol/preventive",{recursive: true});
+fs.mkdirSync(__dirname + "/../temp/bcol/preventive",{recursive: true});
 
 router.get("/bcol-get-reports", bancolombiaController.getReports);
 
