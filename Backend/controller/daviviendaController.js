@@ -9,7 +9,7 @@ const getReports = async (req, res) => {
   const { id, password, url } = credentials.davi;
   console.log("\x1b[0m", "[started DAVI]");
   /* NOTE: Headless FALSE shows progress in real time */
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch();
   const page = await browser.newPage();
   let data = [];
   let info = {
@@ -17,19 +17,19 @@ const getReports = async (req, res) => {
     movements: []
   };
 
-  await page.setRequestInterception(true);
+  // await page.setRequestInterception(true);
 
-  page.on("request", req => {
-    if (
-      req.resourceType() == "stylesheet" ||
-      req.resourceType() == "font" ||
-      req.resourceType() == "image"
-    ) {
-      req.abort();
-    } else {
-      req.continue();
-    }
-  });
+  // page.on("request", req => {
+  //   if (
+  //     req.resourceType() == "stylesheet" ||
+  //     req.resourceType() == "font" ||
+  //     req.resourceType() == "image"
+  //   ) {
+  //     req.abort();
+  //   } else {
+  //     req.continue();
+  //   }
+  // });
 
   try {
     /* ----------------------------------- getting page ----------------------------------- */
@@ -69,6 +69,8 @@ const getReports = async (req, res) => {
     );
 
     /* ----------------------------------- continue to password ----------------------------------- */
+    console.log("  -- Wait for password");
+    await frameContent.waitForSelector('#formAutenticar\\:btnSubmitCont');
     console.log("  -- Continue to password");
     await frameContent.click("#formAutenticar\\:btnSubmitCont");
     if ((await page.$("#closeButton")) !== null) {
@@ -107,17 +109,14 @@ const getReports = async (req, res) => {
       await page.click("#closeButton");
     }
 
-    /* ----------------------------------- PREVENTIVE screenshot & content ----------------------------------- */
+    /* ----------------------------------- PREVENTIVE content ----------------------------------- */
     console.log("               ---                ");
-    console.log("[ PREVENTIVE screenshot & content]");
+    console.log("[ PREVENTIVE content ]");
     console.log("               ---                ");
 
-    await page.screenshot({
-      path: `temp/davi/preventive/preventiveLoggedIn#-#${id}.png`
-    });
     let pageContent = await page.content();
     fs.writeFile(
-      `temp/davi/preventive/preventiveLoggedIn#-#${id}.html`,
+      __dirname + `/../temp/davi/preventive/preventiveLoggedIn#-#${id}.html`,
       pageContent,
       "utf8",
       err => {
@@ -148,15 +147,12 @@ const getReports = async (req, res) => {
 
     /* ----------------------------------- taking screenshot and grabing content ----------------------------------- */
     console.log('Waiting for ".type-one" ...');
-    await page.waitForSelector(".type-one", {
-      timeout: 120000
-    });
+    await page.waitForSelector(".type-one");
     pageContent = await page.content();
-    console.log(`[taking LoggedInScreenshot#-#${id}]`);
 
     console.log(" --- Writing html file --- ");
     fs.writeFileSync(
-      `temp/davi/in/in#-#${id}.html`,
+      __dirname + `/../temp/davi/in/in#-#${id}.html`,
       pageContent,
       "utf8",
       err => {
@@ -283,7 +279,6 @@ const getReports = async (req, res) => {
     if (data.length === 0 || error.code !== "already-logged-in") {
       await page.click("#dashboardform\\:cerrarSesion");
       await page.waitForSelector("#personas-ingresar");
-      await page.screenshot({ path: "temp/logoutScreenshot.png" });
       await browser.close();
     } else {
       await browser.close();
