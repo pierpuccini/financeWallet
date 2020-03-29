@@ -84,92 +84,57 @@ const getReports = async (req, res) => {
 
     await frameContent.waitForSelector("#numACCaccount");
 
-    console.log("Succesfully logged in!");    
+    console.log("Succesfully logged in!");
 
     await frameContent.waitForSelector("#accaccount0");
     await frameContent.waitForSelector("#date_cards_option");
     await frameContent.$eval("#date_cards_option", element => element.click()); // Clicking the link will indirectly cause a navigation
-    console.log('Clicked on card options');
+    console.log("Clicked on card options");
     await frameContent.waitForSelector("#carcards0");
-    console.log("waited for cards to load");        
+    console.log("waited for cards to load");
     const content = await frameContent.content();
-      fs.writeFile(__dirname + `/../temp/bcol/in/content-page.html`, content, "utf8", err => {
+    fs.writeFile(
+      __dirname + `/../temp/bcol/in/content-page.html`,
+      content,
+      "utf8",
+      err => {
         if (err) throw err;
-      });
+      }
+    );
 
     $ = cheerio.load(content);
+
+    let accountId = $("#accaccount0").attr("id");
+    let siblingAccounts = $("#accaccount0").siblings().length;
+    let accountIds = [];
 
     let CardId = $("#carcards0").attr("id");
     let siblingCards = $("#carcards0").siblings().length;
     let CardsIds = [];
 
+    if (siblingAccounts > 0) {
+      for (let i = 0; i <= siblingAccounts; i++) {
+        accountIds.push(accountId.replace(/.$/, i));
+      }
+    } else {
+      accountIds.push(accountId);
+    }
+
     if (siblingCards > 0) {
-      let CardIdDiv = CardId.split("");
       for (let i = 0; i <= siblingCards; i++) {
-        let divCardId = CardIdDiv;
-        divCardId[8] = i;
-        CardsIds.push(divCardId.join(""));
+        CardsIds.push(CardId.replace(/.$/, i));
       }
     } else {
       CardsIds.push(CardId);
     }
 
-    
-    let IdAccount = $("#accaccount0").attr("id");
-    let siblingAccounts = $("#accaccount0").siblings().length;
-    let accountIds = [];
-
-    if (siblingAccounts > 0) {
-      let IdAccountDiv = IdAccount.split("");
-      for (let i = 0; i <= siblingAccounts; i++) {
-        let divAccId = IdAccountDiv;
-        divAccId[10] = i;
-        accountIds.push(divAccId.join(""));
-      }
-    } else {
-      accountIds.push(IdAccount);
-    }
-
     /* ----------------------------------- getting accounts' info ----------------------------------- */
 
-    const basicInfo = id => {
-      console.log("[ --- parsing report --- ]");
-      const d = fs.readFileSync(
-        path.resolve(`temp/bcol/in/content-page.html`),
-        "utf8",
-        err => {
-          if (err) throw err;
-        }
-      );
-
-      /* TODO: migrate to cheerio */
-      let root = HTMLParser.parse(d);
-      for (i = 0; i < accountIds.length; i++) {
-        root = root.querySelectorAll(
-          `#${accountIds[i]}` //accaccount0,accaccount1...
-        );
-        let servicesInfo = [];
-        root.forEach(services => {
-          typeAcc = services.querySelectorAll("div")[0].text;
-          accNum = services.querySelectorAll("span")[0].text;
-          name = typeAcc + " " + accNum;
-          let account = {};
-          account = {
-            available: services.querySelectorAll("div")[2].text
-          };
-          servicesInfo = [...servicesInfo, { name, account }];
-        });
-
-        return servicesInfo;
-      }
-    };
-
-    console.log("   Getting basic info ...");
-    const overview = basicInfo(id);
-    info.overview = JSON.stringify(overview);
+    console.log("Building overview...");
+    info.overview = basicInfo(content, accountIds, CardsIds);
     fs.writeFile(
       __dirname + `/../temp/bcol/overview/overview#-#${id}.txt`,
-      JSON.stringify(overview),
+      JSON.stringify(info.overview),
       "utf8",
       err => {
         if (err) throw err;
@@ -178,9 +143,6 @@ const getReports = async (req, res) => {
     );
 
     /* ----------------------------------- getting credit cards ----------------------------------- */
-
-    
-
 
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
     console.log("                              ");
@@ -198,5 +160,45 @@ const getReports = async (req, res) => {
   } catch (error) {
     ///
   }
+};
+
+const basicInfo = (html, accounts, cards) => {
+  $ = cheerio.load(html);
+  let mappedAccounts = [],
+    mappedCards = [];
+  if (accounts.length > 1) {
+    accounts.forEach(account => {
+      mappedAccounts.push({
+        type: $(`#${account} .panel_query_account_balances_left`).text(),
+        number: $(`#${account} .panel_query_account_balances_center p`).children().first().text(),
+        total: $(`#${account} .panel_query_account_balances_right`).text()
+      });
+    });
+  } else if (accounts.length === 1) {
+    mappedAccounts.push({
+      type: $("#accaccount0 .panel_query_account_balances_left").text(),
+      number: $("#accaccount0 .panel_query_account_balances_center p").children().first().text(),
+      total: $("#accaccount0 .panel_query_account_balances_right").text()
+    });
+  }
+
+  if (cards.length > 1) {
+    cards.forEach(card => {
+      mappedCards.push({
+        cardType: $(`#${card} .panel_query_account_balances_left`).text(),
+        number: $(`#${card} .panel_query_account_balances_center p`).children().first().text(),
+        amountDueCop: $(`#${card} .panel_query_account_balances_right p br`)[0].previousSibling.nodeValue,
+        amountDueUsd: $(`#${card} .panel_query_account_balances_right p br`)[0].nextSibling.nodeValue,
+      });
+    });
+  } else if (cards.length === 1) {
+    mappedCards.push({
+      cardType: $("#carcards0 .panel_query_account_balances_left").text(),
+      number: $("#carcards0 .panel_query_account_balances_center p").children().first().text(),
+      amountDueCop: $("#carcards0 .panel_query_account_balances_right p br")[0].previousSibling.nodeValue,
+      amountDueUsd: $("#carcards0 .panel_query_account_balances_right p br")[0].nextSibling.nodeValue,
+    });
+  } 
+  return {accounts: mappedAccounts, cards: mappedCards}
 };
 module.exports = { getReports };
