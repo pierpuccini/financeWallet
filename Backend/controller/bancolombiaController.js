@@ -1,9 +1,7 @@
-const path = require("path");
 const fs = require("fs");
 const puppeteer = require("puppeteer");
 const credentials = require("../../credentials.json");
 const cheerio = require("cheerio");
-var HTMLParser = require("node-html-parser");
 
 const getReports = async (req, res) => {
   const { id, password, url } = credentials.bcol;
