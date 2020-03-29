@@ -17,19 +17,19 @@ const getReports = async (req, res) => {
     movements: []
   };
 
-  // await page.setRequestInterception(true);
+  await page.setRequestInterception(true);
 
-  // page.on("request", req => {
-  //   if (
-  //     req.resourceType() == "stylesheet" ||
-  //     req.resourceType() == "font" ||
-  //     req.resourceType() == "image"
-  //   ) {
-  //     req.abort();
-  //   } else {
-  //     req.continue();
-  //   }
-  // });
+  page.on("request", req => {
+    if (
+      req.resourceType() == "stylesheet" ||
+      req.resourceType() == "font" ||
+      req.resourceType() == "image"
+    ) {
+      req.abort();
+    } else {
+      req.continue();
+    }
+  });
 
   try {
     /* ----------------------------------- getting page ----------------------------------- */
@@ -145,28 +145,28 @@ const getReports = async (req, res) => {
       }
     }
 
-    /* ----------------------------------- taking screenshot and grabing content ----------------------------------- */
+    /* ----------------------------------- taking grabing content ----------------------------------- */
     console.log('Waiting for ".type-one" ...');
     await page.waitForSelector(".type-one");
     pageContent = await page.content();
 
-    console.log(" --- Writing html file --- ");
-    fs.writeFileSync(
-      __dirname + `/../temp/davi/in/in#-#${id}.html`,
-      pageContent,
-      "utf8",
-      err => {
-        if (err) throw err;
-        console.log(`---- LoggedIn#-#${id} has been saved!`);
-      }
-    );
+    // console.log(" --- Writing html file --- ");
+    // fs.writeFileSync(
+    //   __dirname + `/../temp/davi/in/in#-#${id}.html`,
+    //   pageContent,
+    //   "utf8",
+    //   err => {
+    //     if (err) throw err;
+    //     console.log(`---- LoggedIn#-#${id} has been saved!`);
+    //   }
+    // );
 
     /* ----------------------------------- grabing basic info from html file  ----------------------------------- */
     console.log("   Getting basic info ...");
-    const overview = basicInfo(id);
+    const overview = basicInfo(pageContent);
     info.overview = overview;
     fs.writeFile(
-      `temp/davi/overview/overview#-#${id}.txt`,
+      __dirname + `/../temp/davi/overview/overview#-#${id}.txt`,
       JSON.stringify(overview),
       "utf8",
       err => {
@@ -243,7 +243,7 @@ const getReports = async (req, res) => {
           .get();
         info.movements.push(result);
         fs.writeFileSync(
-          `temp/davi/movements/movementsData${i}#-#${id}.txt`,
+          __dirname + `/../temp/davi/movements/movementsData${i}#-#${id}.txt`,
           JSON.stringify(result),
           "utf8",
           err => {
@@ -264,7 +264,6 @@ const getReports = async (req, res) => {
     console.log("\x1b[33m", "[ --- Closing --- ]");
     console.log("                              ");
     await page.click("#dashboardform\\:cerrarSesion");
-    await page.screenshot({ path: `temp/davi/LoggedScreenshot#-#${id}.png` });
     console.log("\x1b[0m");
     console.log("\x1b[32m", "[-- session closed! --]");
     console.log("[Sending data to postman or api caller]");
@@ -296,18 +295,8 @@ const getReports = async (req, res) => {
   }
 };
 
-const basicInfo = id => {
-  console.log("[ --- parsing report --- ]");
-  const d = fs.readFileSync(
-    path.resolve(`temp/davi/in/in#-#${id}.html`),
-    "utf8",
-    err => {
-      if (err) throw err;
-    }
-  );
-
-  /* TODO: migrate to cheerio */
-  let root = HTMLParser.parse(d);
+const basicInfo = html => {
+  let root = HTMLParser.parse(html);
   root = root.querySelectorAll(
     "#dashboardform:pagepanel .content-resumen table tbody tr"
   );
@@ -377,4 +366,4 @@ const test = (req, res) => {
   res.send(result);
 };
 
-module.exports = { getReports, test };
+module.exports = { getReports, basicInfo, test };
