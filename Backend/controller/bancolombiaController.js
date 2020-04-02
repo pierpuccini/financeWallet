@@ -141,9 +141,154 @@ const getReports = async (req, res) => {
         console.log(`overview#-#${id} been saved!`);
       }
     );
+    /*-------------------------------------getting accounts' movements------------------------------------*/
+    
+    await frameContent.waitForSelector("#menuContainer > div.navbar.navbar-blue > div > ul > li:nth-child(2)");
+    console.log("waitForSelector menu");
+    await frameContent.hover("#menuContainer > div.navbar.navbar-blue > div > ul > li:nth-child(2)");
+    await frameContent.click("#menuContainer > div.navbar.navbar-blue > div > ul > li:nth-child(2)");
+    console.log("Selecting accounts"); 
+    await frameContent.waitForSelector("#link_prod_cuenta");
+    await frameContent.click("#link_prod_cuenta");
+    await frameContent.waitForSelector("#CA_385000005752200");
+    await frameContent.click("#CA_385000005752200 > td:nth-child(3) > a");
+    console.log("Account selected"); 
+    await frameContent.waitForSelector("#gridDetail_savings");
+    await frameContent.$eval("#gridDetail_savings", element => element.click()); // Clicking the link will indirectly cause a navigation
+    console.log("movements loaded");
+  
+    const movementsContent = await frameContent.content();
+    
+    //-----------------------------------loading table-------------------------------------------------------------
+    
+    let a = cheerio.load(movementsContent);
+    let result = a("#gridDetail_savings tr").map((i, element) => ({
+        date: a(element)
+          .find("td:nth-of-type(1)")
+          .text()
+          .trim(),
+        amount: a(element)
+          .find("td:nth-of-type(5)")
+          .text()
+          .trim(),
+        reference: a(element)
+          .find("td:nth-of-type(4)")
+          .text()
+          .trim(),
+        description: a(element)
+          .find("td:nth-of-type(3)")
+          .text()
+          .trim()
+      })).get();
+    e = result.shift();
+    info.movements.push(result);    
+    
+    fs.writeFileSync(
+      `temp/bcol/movements/movementsData0#-#${id}.txt`,
+      JSON.stringify(result),
+      "utf8",
+      err => {
+        if (err) throw err;
+        console.log(`---- movementsTable0#-#${id} has been saved!`);
+      }
+    );
 
-    /* ----------------------------------- getting credit cards ----------------------------------- */
+    await frameContent.waitForSelector("#accountId");
+    await frameContent.click("#accountId");
+    const totalMovements = await frameContent.evaluate(() => {
+      return document.querySelector('#accountId').length
+    })
+    // Get the value of the first element
 
+    //------------------------gettin all movements-----------
+    for (i = 2;i <=totalMovements;i++) {     
+      const name = await frameContent.evaluate(() => {
+        return document.querySelector(`#accountId > option:nth-child(${[i+1]})`).innerHTML
+      })
+      console.log(name);
+      const value = await frameContent.evaluate(() => {
+        return document.querySelector(`#accountId > option:nth-child(${[i+1]})`).value
+      })
+      // Use it with page.select to select the item and trigger the change event
+      
+      await frameContent.select('#accountId', value)
+      await frameContent.waitForSelector("#gridProductID_creditCardDetails");    
+      await frameContent.$eval("#gridProductID_creditCardDetails", element => element.click()); // Clicking the link will indirectly cause a navigation
+    
+      const totalmovementsContent = await frameContent.content();
+      let a = cheerio.load(totalmovementsContent);
+      if (name.includes("Cuenta")) {
+        let results = a("#gridDetail_savings tr").map((i, element) => ({
+          date: a(element)
+            .find("td:nth-of-type(1)")
+            .text()
+            .trim(),
+          amount: a(element)
+            .find("td:nth-of-type(5)")
+            .text()
+            .trim(),
+          reference: a(element)
+            .find("td:nth-of-type(4)")
+            .text()
+            .trim(),
+          description: a(element)
+            .find("td:nth-of-type(3)")
+            .text()
+            .trim()
+        })).get();
+        e = results.shift();
+        info.movements.push(results);          
+        fs.writeFileSync(
+          `temp/bcol/movements/movementsData${i-1}#-#${id}.txt`,
+          JSON.stringify(results),
+          "utf8",
+          err => {
+            if (err) throw err;
+            console.log(`---- movementsTable${i-1}#-#${id} has been saved!`);
+          }
+        );
+      
+      } else {
+        let results = a("#gridProductID_creditCardDetails tr").map((i, element) => ({
+          date: a(element)
+            .find("td:nth-of-type(1)")
+            .text()
+            .trim(),
+          amount: a(element)
+            .find("td:nth-of-type(6)")
+            .text()
+            .trim(),
+          currency: a(element)
+            .find("td:nth-of-type(5)")
+            .text()
+            .trim(),
+          description: a(element)
+            .find("td:nth-of-type(2)")
+            .text()
+            .trim(),
+          payments: a(element)
+            .find("td:nth-of-type(3)")
+            .text()
+            .trim()      
+        })).get(); 
+        e = results.shift();
+        info.movements.push(results);          
+        fs.writeFileSync(
+          `temp/bcol/movements/movementsData${i-1}#-#${id}.txt`,
+          JSON.stringify(results),
+          "utf8",
+          err => {
+            if (err) throw err;
+            console.log(`---- movementsTable${i-1}#-#${id} has been saved!`);
+          }
+        );  
+       
+      }
+      
+
+
+    }
+    
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
     console.log("                              ");
     console.log("\x1b[33m", "[ --- Closing --- ]");
