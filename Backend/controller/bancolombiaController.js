@@ -12,7 +12,7 @@ const getReports = async (req, res) => {
   const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,
-    slowMo: 10
+    slowMo: 10,
   });
   const page = await browser.newPage();
   await page.setUserAgent(
@@ -23,7 +23,7 @@ const getReports = async (req, res) => {
   let $;
   let info = {
     overview: {},
-    movements: []
+    movements: [],
   };
 
   try {
@@ -51,20 +51,14 @@ const getReports = async (req, res) => {
       $ = cheerio.load(logginContent);
 
       $("#_KEYBRD > tbody > tr > td").each((i, element) => {
-        if (
-          $(element)
-            .text()
-            .trim() == passwordArr[success]
-        ) {
+        if ($(element).text().trim() == passwordArr[success]) {
           cheerioEl = $(element);
           return false;
         }
       });
 
       if (cheerioEl != 0) {
-        const divId = $(cheerioEl)
-          .find("div")
-          .attr("id");
+        const divId = $(cheerioEl).find("div").attr("id");
         const [targetElement] = await page.$x(`//div[@id='${divId}']/..`);
         await targetElement.click();
         success += 1;
@@ -88,19 +82,13 @@ const getReports = async (req, res) => {
 
     await frameContent.waitForSelector("#accaccount0");
     await frameContent.waitForSelector("#date_cards_option");
-    await frameContent.$eval("#date_cards_option", element => element.click()); // Clicking the link will indirectly cause a navigation
+    await frameContent.$eval("#date_cards_option", (element) =>
+      element.click()
+    ); // Clicking the link will indirectly cause a navigation
     console.log("Clicked on card options");
     await frameContent.waitForSelector("#carcards0");
     console.log("waited for cards to load");
     const content = await frameContent.content();
-    fs.writeFile(
-      __dirname + `/../temp/bcol/in/content-page.html`,
-      content,
-      "utf8",
-      err => {
-        if (err) throw err;
-      }
-    );
 
     $ = cheerio.load(content);
 
@@ -136,58 +124,79 @@ const getReports = async (req, res) => {
       __dirname + `/../temp/bcol/overview/overview#-#${id}.txt`,
       JSON.stringify(info.overview),
       "utf8",
-      err => {
+      (err) => {
         if (err) throw err;
         console.log(`overview#-#${id} been saved!`);
       }
     );
     /*-------------------------------------getting accounts' movements------------------------------------*/
-    
-    await frameContent.waitForSelector("#menuContainer > div.navbar.navbar-blue > div > ul > li:nth-child(2)");
+
+    await frameContent.waitForSelector(
+      "#menuContainer > div.navbar.navbar-blue > div > ul > li:nth-child(2)"
+    );
     console.log("waitForSelector menu");
-    await frameContent.hover("#menuContainer > div.navbar.navbar-blue > div > ul > li:nth-child(2)");
-    await frameContent.click("#menuContainer > div.navbar.navbar-blue > div > ul > li:nth-child(2)");
-    console.log("Selecting accounts"); 
+    await frameContent.hover(
+      "#menuContainer > div.navbar.navbar-blue > div > ul > li:nth-child(2)"
+    );
+    await frameContent.click(
+      "#menuContainer > div.navbar.navbar-blue > div > ul > li:nth-child(2)"
+    );
+    console.log("Selecting accounts");
     await frameContent.waitForSelector("#link_prod_cuenta");
     await frameContent.click("#link_prod_cuenta");
-    await frameContent.waitForSelector("#gridProductID_savings tbody tr:nth-child(2)");
+    await frameContent.waitForSelector(
+      "#gridProductID_savings tbody tr:nth-child(2)"
+    );
     await frameContent.click("#gridProductID_savings tbody tr:nth-child(2)");
-    console.log("Account selected"); 
-    await frameContent.waitForSelector("#gridDetail_savings");
-    await frameContent.$eval("#gridDetail_savings", element => element.click()); // Clicking the link will indirectly cause a navigation
-    console.log("movements loaded");
-  
+    console.log("Account selected");
+    await frameContent.waitForSelector(
+      "#detail-grid_savings > #contenedor #accountId"
+    );
+    const inputDropdownValues = await frameContent.content();
+    // fs.writeFile(
+    //   __dirname + `/../temp/bcol/in/content-frame-page.html`,
+    //   overviewAndMovements,
+    //   "utf8",
+    //   err => {
+    //     if (err) throw err;
+    //   }
+    // );
+    $ = cheerio.load(inputDropdownValues);
+    let selectOptions = [];
+    $("#accountId")
+      .find("option")
+      .each((i, op) => {
+        let parsedOption = {
+          value: $(op).attr("value"),
+          selected: $(op).attr("selected"),
+        };
+        selectOptions.push(parsedOption);
+      });
+
+    console.log("dropdown options loaded");
+
     const movementsContent = await frameContent.content();
-    
+    console.log("movements loaded");
+
     //-----------------------------------loading table-------------------------------------------------------------
-    
+
     let a = cheerio.load(movementsContent);
-    let result = a("#gridDetail_savings tr").map((i, element) => ({
-        date: a(element)
-          .find("td:nth-of-type(1)")
-          .text()
-          .trim(),
-        amount: a(element)
-          .find("td:nth-of-type(5)")
-          .text()
-          .trim(),
-        reference: a(element)
-          .find("td:nth-of-type(4)")
-          .text()
-          .trim(),
-        description: a(element)
-          .find("td:nth-of-type(3)")
-          .text()
-          .trim()
-      })).get();
+    let result = a("#gridDetail_savings tr")
+      .map((i, element) => ({
+        date: a(element).find("td:nth-of-type(1)").text().trim(),
+        amount: a(element).find("td:nth-of-type(5)").text().trim(),
+        reference: a(element).find("td:nth-of-type(4)").text().trim(),
+        description: a(element).find("td:nth-of-type(3)").text().trim(),
+      }))
+      .get();
     e = result.shift();
-    info.movements.push(result);    
-    
+    info.movements.push(result);
+
     fs.writeFileSync(
       `temp/bcol/movements/movementsData0#-#${id}.txt`,
       JSON.stringify(result),
       "utf8",
-      err => {
+      (err) => {
         if (err) throw err;
         console.log(`---- movementsTable0#-#${id} has been saved!`);
       }
@@ -196,99 +205,77 @@ const getReports = async (req, res) => {
     await frameContent.waitForSelector("#accountId");
     await frameContent.click("#accountId");
     const totalMovements = await frameContent.evaluate(() => {
-      return document.querySelector('#accountId').length
-    })
+      return document.querySelector("#accountId").length;
+    });
     // Get the value of the first element
 
     //------------------------getting all movements-----------
-    for (i = 2;i <=totalMovements;i++) {     
+    for (i = 2; i <= totalMovements; i++) {
       const name = await frameContent.evaluate(() => {
-        return document.querySelector(`#accountId > option:nth-child(${[i+1]})`).innerHTML
-      })
+        return document.querySelector(
+          `#accountId > option:nth-child(${[i + 1]})`
+        ).innerHTML;
+      });
       console.log(name);
       const value = await frameContent.evaluate(() => {
-        return document.querySelector(`#accountId > option:nth-child(${[i+1]})`).value
-      })
+        return document.querySelector(
+          `#accountId > option:nth-child(${[i + 1]})`
+        ).value;
+      });
       // Use it with page.select to select the item and trigger the change event
-      
-      await frameContent.select('#accountId', value)
-      await frameContent.waitForSelector("#gridProductID_creditCardDetails");    
-      await frameContent.$eval("#gridProductID_creditCardDetails", element => element.click()); // Clicking the link will indirectly cause a navigation
-    
+
+      await frameContent.select("#accountId", value);
+      await frameContent.waitForSelector("#gridProductID_creditCardDetails");
+      await frameContent.$eval("#gridProductID_creditCardDetails", (element) =>
+        element.click()
+      ); // Clicking the link will indirectly cause a navigation
+
       const totalmovementsContent = await frameContent.content();
       let a = cheerio.load(totalmovementsContent);
       if (name.includes("Cuenta")) {
-        let results = a("#gridDetail_savings tr").map((i, element) => ({
-          date: a(element)
-            .find("td:nth-of-type(1)")
-            .text()
-            .trim(),
-          amount: a(element)
-            .find("td:nth-of-type(5)")
-            .text()
-            .trim(),
-          reference: a(element)
-            .find("td:nth-of-type(4)")
-            .text()
-            .trim(),
-          description: a(element)
-            .find("td:nth-of-type(3)")
-            .text()
-            .trim()
-        })).get();
+        let results = a("#gridDetail_savings tr")
+          .map((i, element) => ({
+            date: a(element).find("td:nth-of-type(1)").text().trim(),
+            amount: a(element).find("td:nth-of-type(5)").text().trim(),
+            reference: a(element).find("td:nth-of-type(4)").text().trim(),
+            description: a(element).find("td:nth-of-type(3)").text().trim(),
+          }))
+          .get();
         e = results.shift();
-        info.movements.push(results);          
+        info.movements.push(results);
         fs.writeFileSync(
-          `temp/bcol/movements/movementsData${i-1}#-#${id}.txt`,
+          `temp/bcol/movements/movementsData${i - 1}#-#${id}.txt`,
           JSON.stringify(results),
           "utf8",
-          err => {
+          (err) => {
             if (err) throw err;
-            console.log(`---- movementsTable${i-1}#-#${id} has been saved!`);
+            console.log(`---- movementsTable${i - 1}#-#${id} has been saved!`);
           }
         );
-      
       } else {
-        let results = a("#gridProductID_creditCardDetails tr").map((i, element) => ({
-          date: a(element)
-            .find("td:nth-of-type(1)")
-            .text()
-            .trim(),
-          amount: a(element)
-            .find("td:nth-of-type(6)")
-            .text()
-            .trim(),
-          currency: a(element)
-            .find("td:nth-of-type(5)")
-            .text()
-            .trim(),
-          description: a(element)
-            .find("td:nth-of-type(2)")
-            .text()
-            .trim(),
-          payments: a(element)
-            .find("td:nth-of-type(3)")
-            .text()
-            .trim()      
-        })).get(); 
+        let results = a("#gridProductID_creditCardDetails tr")
+          .map((i, element) => ({
+            date: a(element).find("td:nth-of-type(1)").text().trim(),
+            amount: a(element).find("td:nth-of-type(6)").text().trim(),
+            currency: a(element).find("td:nth-of-type(5)").text().trim(),
+            description: a(element).find("td:nth-of-type(2)").text().trim(),
+            payments: a(element).find("td:nth-of-type(3)").text().trim(),
+          }))
+          .get();
         e = results.shift();
-        info.movements.push(results);          
+        info.movements.push(results);
         fs.writeFileSync(
-          `temp/bcol/movements/movementsData${i-1}#-#${id}.txt`,
+          `temp/bcol/movements/movementsData${i - 1}#-#${id}.txt`,
           JSON.stringify(results),
           "utf8",
-          err => {
+          (err) => {
             if (err) throw err;
-            console.log(`---- movementsTable${i-1}#-#${id} has been saved!`);
+            console.log(`---- movementsTable${i - 1}#-#${id} has been saved!`);
           }
-        );  
-       
+        );
       }
-      
-
-
     }
-    
+
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
     console.log("                              ");
     console.log("\x1b[33m", "[ --- Closing --- ]");
@@ -312,38 +299,55 @@ const basicInfo = (html, accounts, cards) => {
   let mappedAccounts = [],
     mappedCards = [];
   if (accounts.length > 1) {
-    accounts.forEach(account => {
+    accounts.forEach((account) => {
       mappedAccounts.push({
         type: $(`#${account} .panel_query_account_balances_left`).text(),
-        number: $(`#${account} .panel_query_account_balances_center p`).children().first().text(),
-        total: $(`#${account} .panel_query_account_balances_right`).text()
+        number: $(`#${account} .panel_query_account_balances_center p`)
+          .children()
+          .first()
+          .text(),
+        total: $(`#${account} .panel_query_account_balances_right`).text(),
       });
     });
   } else if (accounts.length === 1) {
     mappedAccounts.push({
       type: $("#accaccount0 .panel_query_account_balances_left").text(),
-      number: $("#accaccount0 .panel_query_account_balances_center p").children().first().text(),
-      total: $("#accaccount0 .panel_query_account_balances_right").text()
+      number: $("#accaccount0 .panel_query_account_balances_center p")
+        .children()
+        .first()
+        .text(),
+      total: $("#accaccount0 .panel_query_account_balances_right").text(),
     });
   }
 
   if (cards.length > 1) {
-    cards.forEach(card => {
+    cards.forEach((card) => {
       mappedCards.push({
         cardType: $(`#${card} .panel_query_account_balances_left`).text(),
-        number: $(`#${card} .panel_query_account_balances_center p`).children().first().text(),
-        amountDueCop: $(`#${card} .panel_query_account_balances_right p br`)[0].previousSibling.nodeValue,
-        amountDueUsd: $(`#${card} .panel_query_account_balances_right p br`)[0].nextSibling.nodeValue,
+        number: $(`#${card} .panel_query_account_balances_center p`)
+          .children()
+          .first()
+          .text(),
+        amountDueCop: $(`#${card} .panel_query_account_balances_right p br`)[0]
+          .previousSibling.nodeValue,
+        amountDueUsd: $(`#${card} .panel_query_account_balances_right p br`)[0]
+          .nextSibling.nodeValue,
       });
     });
   } else if (cards.length === 1) {
     mappedCards.push({
       cardType: $("#carcards0 .panel_query_account_balances_left").text(),
-      number: $("#carcards0 .panel_query_account_balances_center p").children().first().text(),
-      amountDueCop: $("#carcards0 .panel_query_account_balances_right p br")[0].previousSibling.nodeValue,
-      amountDueUsd: $("#carcards0 .panel_query_account_balances_right p br")[0].nextSibling.nodeValue,
+      number: $("#carcards0 .panel_query_account_balances_center p")
+        .children()
+        .first()
+        .text(),
+      amountDueCop: $("#carcards0 .panel_query_account_balances_right p br")[0]
+        .previousSibling.nodeValue,
+      amountDueUsd: $("#carcards0 .panel_query_account_balances_right p br")[0]
+        .nextSibling.nodeValue,
     });
-  } 
-  return {accounts: mappedAccounts, cards: mappedCards}
+  }
+  return { accounts: mappedAccounts, cards: mappedCards };
 };
+
 module.exports = { getReports };
