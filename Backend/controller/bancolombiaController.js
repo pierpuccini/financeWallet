@@ -150,8 +150,8 @@ const getReports = async (req, res) => {
     console.log("Selecting accounts"); 
     await frameContent.waitForSelector("#link_prod_cuenta");
     await frameContent.click("#link_prod_cuenta");
-    await frameContent.waitForSelector("#CA_385000005752200");
-    await frameContent.click("#CA_385000005752200 > td:nth-child(3) > a");
+    await frameContent.waitForSelector("#gridProductID_savings tbody tr:nth-child(2)");
+    await frameContent.click("#gridProductID_savings tbody tr:nth-child(2)");
     console.log("Account selected"); 
     await frameContent.waitForSelector("#gridDetail_savings");
     await frameContent.$eval("#gridDetail_savings", element => element.click()); // Clicking the link will indirectly cause a navigation
@@ -200,7 +200,7 @@ const getReports = async (req, res) => {
     })
     // Get the value of the first element
 
-    //------------------------gettin all movements-----------
+    //------------------------getting all movements-----------
     for (i = 2;i <=totalMovements;i++) {     
       const name = await frameContent.evaluate(() => {
         return document.querySelector(`#accountId > option:nth-child(${[i+1]})`).innerHTML
@@ -299,7 +299,7 @@ const getReports = async (req, res) => {
     await frameContent.waitForSelector(".btn_Succed_Popup");
     /* TODO: cerrar sesion bancolombia */
     //await frameContent.click('.btn_Succed_Popup')
-    await browser.close();
+    // await browser.close();
     console.log("Browser closed");
     res.send(info);
   } catch (error) {
