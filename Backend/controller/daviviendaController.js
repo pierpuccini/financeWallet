@@ -12,14 +12,11 @@ const getReports = async (req, res) => {
   const browser = await puppeteer.launch();
   const page = await browser.newPage();
   let data = [];
-  let info = {
-    overview: {},
-    movements: []
-  };
+  let info = [];
 
   await page.setRequestInterception(true);
 
-  page.on("request", req => {
+  page.on("request", (req) => {
     if (
       req.resourceType() == "stylesheet" ||
       req.resourceType() == "font" ||
@@ -56,7 +53,7 @@ const getReports = async (req, res) => {
     /* ----------------------------------- Filling Document # ----------------------------------- */
     console.log("-- Filling Document number & focusing on input");
     await frameContent.waitForSelector("#formAutenticar\\:numeroDocumento", {
-      timeout: 120000
+      timeout: 120000,
     });
     await frameContent.focus("#formAutenticar\\:numeroDocumento");
 
@@ -70,7 +67,7 @@ const getReports = async (req, res) => {
 
     /* ----------------------------------- continue to password ----------------------------------- */
     console.log("  -- Wait for password");
-    await frameContent.waitForSelector('#formAutenticar\\:btnSubmitCont');
+    await frameContent.waitForSelector("#formAutenticar\\:btnSubmitCont");
     console.log("  -- Continue to password");
     await frameContent.click("#formAutenticar\\:btnSubmitCont");
     if ((await page.$("#closeButton")) !== null) {
@@ -119,7 +116,7 @@ const getReports = async (req, res) => {
       __dirname + `/../temp/davi/preventive/preventiveLoggedIn#-#${id}.html`,
       pageContent,
       "utf8",
-      err => {
+      (err) => {
         if (err) throw err;
         console.log(`preventiveLoggedIn#-#${id} been saved!`);
       }
@@ -134,7 +131,7 @@ const getReports = async (req, res) => {
           const tds = Array.from(
             document.querySelectorAll(".tablaMessage tbody tr td")
           );
-          return tds.map(td => td.textContent);
+          return tds.map((td) => td.textContent);
         });
         content = await frameContent.content();
         await browser.close();
@@ -164,12 +161,12 @@ const getReports = async (req, res) => {
     /* ----------------------------------- grabing basic info from html file  ----------------------------------- */
     console.log("   Getting basic info ...");
     const overview = basicInfo(pageContent);
-    info.overview = overview;
+    info = overview;
     fs.writeFile(
       __dirname + `/../temp/davi/overview/overview#-#${id}.txt`,
       JSON.stringify(overview),
       "utf8",
-      err => {
+      (err) => {
         if (err) throw err;
         console.log(`overview#-#${id} been saved!`);
       }
@@ -177,9 +174,7 @@ const getReports = async (req, res) => {
 
     let $ = cheerio.load(pageContent);
 
-    let accountId = $(".type-one tbody tr td a")
-      .attr("id")
-      .split(":");
+    let accountId = $(".type-one tbody tr td a").attr("id").split(":");
     let accountDivIds = [];
     let accounts = $(".type-one tbody").closest("tr").length;
     for (let i = 0; i < accounts; i++) {
@@ -190,13 +185,13 @@ const getReports = async (req, res) => {
 
     for (let i = 0; i < accountDivIds.length; i++) {
       await page.waitForSelector(`#${accountDivIds[i]}`, {
-        timeout: 120000
+        timeout: 120000,
       });
       await page.click(`#${accountDivIds[i]}`);
       /* ----------------------------------- waiting for iframe ----------------------------------- */
       console.log("Waiting for iframe ...");
       await page.waitForSelector("#dashboardform\\:dynamicIframe iframe", {
-        timeout: 120000
+        timeout: 120000,
       });
       const elementHandleDetails = await page.$(
         "#dashboardform\\:dynamicIframe iframe"
@@ -206,7 +201,7 @@ const getReports = async (req, res) => {
       console.log("[*** iFrame Loaded ***]");
       const frameContentDetails = await elementHandleDetails.contentFrame();
       await frameContentDetails.waitForXPath("//a[contains(., 'Últimos')]", {
-        timeout: 120000
+        timeout: 120000,
       });
       console.log("\x1b[33m", "*** Last movements loaded ***");
       let movements = await frameContentDetails.$x(
@@ -218,35 +213,35 @@ const getReports = async (req, res) => {
         await frameContentDetails.waitFor(15000);
         let movementsTable = await frameContentDetails.$eval(
           "center form",
-          element => element.innerHTML
+          (element) => element.innerHTML
         );
         let $ = cheerio.load(movementsTable);
-        const result = $("tr")
-          .map((i, element) => ({
-            date: $(element)
-              .find("td:nth-of-type(1)")
-              .text()
-              .trim(),
-            amount: $(element)
-              .find("td:nth-of-type(2)")
-              .text()
-              .trim(),
-            id: $(element)
-              .find("td:nth-of-type(3)")
-              .text()
-              .trim(),
-            description: $(element)
-              .find("td:nth-of-type(4)")
-              .text()
-              .trim()
-          }))
-          .get();
-        info.movements.push(result);
+        let result = [];
+        if (info[i].name.includes("Cuenta de")) {
+          result = $("tr")
+            .map((i, element) => ({
+              date: $(element).find("td:nth-of-type(1)").text().trim(),
+              amount: $(element).find("td:nth-of-type(2)").text().trim(),
+              id: $(element).find("td:nth-of-type(3)").text().trim(),
+              description: $(element).find("td:nth-of-type(4)").text().trim(),
+            }))
+            .get();
+        } else if (info[i].name.includes("Tarjeta de")) {
+          result = $("tr")
+            .map((i, element) => ({
+              date: $(element).find("td:nth-of-type(1)").text().trim(),
+              amount: $(element).find("td:nth-of-type(4)").text().trim(),
+              id: $(element).find("td:nth-of-type(2)").text().trim(),
+              description: $(element).find("td:nth-of-type(3)").text().trim(),
+            }))
+            .get();
+        }
+        info[i].movements = result;
         fs.writeFileSync(
           __dirname + `/../temp/davi/movements/movementsData${i}#-#${id}.txt`,
           JSON.stringify(result),
           "utf8",
-          err => {
+          (err) => {
             if (err) throw err;
             console.log(`---- movementsTable${i}#-#${id} has been saved!`);
           }
@@ -295,14 +290,14 @@ const getReports = async (req, res) => {
   }
 };
 
-const basicInfo = html => {
+const basicInfo = (html) => {
   let root = HTMLParser.parse(html);
   root = root.querySelectorAll(
     "#dashboardform:pagepanel .content-resumen table tbody tr"
   );
 
   let servicesInfo = [];
-  root.forEach(services => {
+  root.forEach((services) => {
     name = services.querySelectorAll("td table tbody tr td")[0].innerHTML;
     let account = {};
     if (name.includes("Cuenta")) {
@@ -310,7 +305,7 @@ const basicInfo = html => {
         available: services.querySelectorAll("td table tbody tr td")[1]
           .innerHTML,
         savings: services.querySelectorAll("td table tbody tr td")[3].innerHTML,
-        total: services.querySelectorAll("td table tbody tr td")[5].innerHTML
+        total: services.querySelectorAll("td table tbody tr td")[5].innerHTML,
       };
     } else {
       account = {
@@ -320,11 +315,11 @@ const basicInfo = html => {
           ammount: services.querySelectorAll("td table tbody tr td")[2]
             .innerHTML,
           dateDue: services.querySelectorAll("td table tbody tr td")[3]
-            .innerHTML
+            .innerHTML,
         },
         debt: services.querySelectorAll("td table tbody tr td")[4].innerHTML,
         totalPayment: services.querySelectorAll("td table tbody tr td")[5]
-          .innerHTML
+          .innerHTML,
       };
     }
     servicesInfo = [...servicesInfo, { name, account }];
@@ -337,29 +332,17 @@ const test = (req, res) => {
   const pageContent = fs.readFileSync(
     path.resolve("temp/davi/movements/movementsTable.html"),
     "utf8",
-    err => {
+    (err) => {
       if (err) throw err;
     }
   );
   let $ = cheerio.load(pageContent);
   const result = $("tr")
     .map((i, element) => ({
-      date: $(element)
-        .find("td:nth-of-type(1)")
-        .text()
-        .trim(),
-      amount: $(element)
-        .find("td:nth-of-type(2)")
-        .text()
-        .trim(),
-      id: $(element)
-        .find("td:nth-of-type(3)")
-        .text()
-        .trim(),
-      description: $(element)
-        .find("td:nth-of-type(4)")
-        .text()
-        .trim()
+      date: $(element).find("td:nth-of-type(1)").text().trim(),
+      amount: $(element).find("td:nth-of-type(2)").text().trim(),
+      id: $(element).find("td:nth-of-type(3)").text().trim(),
+      description: $(element).find("td:nth-of-type(4)").text().trim(),
     }))
     .get();
   console.log(JSON.stringify(result));
