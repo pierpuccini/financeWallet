@@ -1,9 +1,7 @@
-const path = require("path");
 const fs = require("fs");
 const puppeteer = require("puppeteer");
 const credentials = require("../../credentials.json");
 const cheerio = require("cheerio");
-var HTMLParser = require("node-html-parser");
 
 const getReports = async (req, res) => {
   const { id, password, url } = credentials.bcol;
@@ -12,23 +10,19 @@ const getReports = async (req, res) => {
   const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,
-    slowMo: 10,
+    slowMo: 20,
   });
   const page = await browser.newPage();
   await page.setUserAgent(
     "5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36"
   );
 
-  let data = [];
   let $;
-  let info = {
-    overview: {},
-    movements: [],
-  };
+  let info = [];
 
   try {
     /* ----------------------------------- getting page ----------------------------------- */
-    await page.goto(url);
+    await page.goto(url, { waitUntil: "networkidle0" });
     /* ----------------------------------- Entering user name and submiting ----------------------------------- */
     console.log("-- Entering username");
     await page.waitForSelector("#username");
@@ -81,55 +75,8 @@ const getReports = async (req, res) => {
     console.log("Succesfully logged in!");
 
     await frameContent.waitForSelector("#accaccount0");
-    await frameContent.waitForSelector("#date_cards_option");
-    await frameContent.$eval("#date_cards_option", (element) =>
-      element.click()
-    ); // Clicking the link will indirectly cause a navigation
-    console.log("Clicked on card options");
-    await frameContent.waitForSelector("#carcards0");
-    console.log("waited for cards to load");
-    const content = await frameContent.content();
 
-    $ = cheerio.load(content);
-
-    let accountId = $("#accaccount0").attr("id");
-    let siblingAccounts = $("#accaccount0").siblings().length;
-    let accountIds = [];
-
-    let CardId = $("#carcards0").attr("id");
-    let siblingCards = $("#carcards0").siblings().length;
-    let CardsIds = [];
-
-    if (siblingAccounts > 0) {
-      for (let i = 0; i <= siblingAccounts; i++) {
-        accountIds.push(accountId.replace(/.$/, i));
-      }
-    } else {
-      accountIds.push(accountId);
-    }
-
-    if (siblingCards > 0) {
-      for (let i = 0; i <= siblingCards; i++) {
-        CardsIds.push(CardId.replace(/.$/, i));
-      }
-    } else {
-      CardsIds.push(CardId);
-    }
-
-    /* ----------------------------------- getting accounts' info ----------------------------------- */
-
-    console.log("Building overview...");
-    info.overview = basicInfo(content, accountIds, CardsIds);
-    fs.writeFile(
-      __dirname + `/../temp/bcol/overview/overview#-#${id}.txt`,
-      JSON.stringify(info.overview),
-      "utf8",
-      (err) => {
-        if (err) throw err;
-        console.log(`overview#-#${id} been saved!`);
-      }
-    );
-    /*-------------------------------------getting accounts' movements------------------------------------*/
+    await frameContent.content();
 
     await frameContent.waitForSelector(
       "#menuContainer > div.navbar.navbar-blue > div > ul > li:nth-child(2)"
@@ -142,15 +89,19 @@ const getReports = async (req, res) => {
       "#menuContainer > div.navbar.navbar-blue > div > ul > li:nth-child(2)"
     );
     console.log("Selecting accounts");
-    await frameContent.waitForSelector("#link_prod_cuenta");
-    await frameContent.click("#link_prod_cuenta");
+    await frameContent.$eval("#link_prod_cuenta", (element) => element.click()); // Clicking the link will indirectly cause a navigation
+    // await frameContent.waitForSelector("#link_prod_cuenta");
+    // await frameContent.click("#link_prod_cuenta");
     await frameContent.waitForSelector(
       "#gridProductID_savings tbody tr:nth-child(2)"
     );
     await frameContent.click("#gridProductID_savings tbody tr:nth-child(2)");
     console.log("Account selected");
     await frameContent.waitForSelector(
-      "#detail-grid_savings > #contenedor #accountId"
+      "#detail-grid_savings > #contenedor #accountId",
+      {
+        visible: true,
+      }
     );
     const inputDropdownValues = await frameContent.content();
     // fs.writeFile(
@@ -169,111 +120,47 @@ const getReports = async (req, res) => {
         let parsedOption = {
           value: $(op).attr("value"),
           selected: $(op).attr("selected"),
+          name: $(op).text(),
         };
         selectOptions.push(parsedOption);
       });
-
     console.log("dropdown options loaded");
+    for (i = 0; i <= selectOptions.length; i++) {
+      console.log("selecting item");
+      await frameContent.select("#accountId", selectOptions[i].value);
 
-    const movementsContent = await frameContent.content();
-    console.log("movements loaded");
+      // await frameContent.waitForSelector(".pg_pgd_frm_ctnt", {
+      //   visible: true,
+      // });
+      // await frameContent.waitForSelector(".pg_grid_ctnt #histories", {
+      //   visible: true,
+      // });
 
-    //-----------------------------------loading table-------------------------------------------------------------
-
-    let a = cheerio.load(movementsContent);
-    let result = a("#gridDetail_savings tr")
-      .map((i, element) => ({
-        date: a(element).find("td:nth-of-type(1)").text().trim(),
-        amount: a(element).find("td:nth-of-type(5)").text().trim(),
-        reference: a(element).find("td:nth-of-type(4)").text().trim(),
-        description: a(element).find("td:nth-of-type(3)").text().trim(),
-      }))
-      .get();
-    e = result.shift();
-    info.movements.push(result);
-
-    fs.writeFileSync(
-      `temp/bcol/movements/movementsData0#-#${id}.txt`,
-      JSON.stringify(result),
-      "utf8",
-      (err) => {
-        if (err) throw err;
-        console.log(`---- movementsTable0#-#${id} has been saved!`);
-      }
-    );
-
-    await frameContent.waitForSelector("#accountId");
-    await frameContent.click("#accountId");
-    const totalMovements = await frameContent.evaluate(() => {
-      return document.querySelector("#accountId").length;
-    });
-    // Get the value of the first element
-
-    //------------------------getting all movements-----------
-    for (i = 2; i <= totalMovements; i++) {
-      const name = await frameContent.evaluate(() => {
-        return document.querySelector(
-          `#accountId > option:nth-child(${[i + 1]})`
-        ).innerHTML;
-      });
-      console.log(name);
-      const value = await frameContent.evaluate(() => {
-        return document.querySelector(
-          `#accountId > option:nth-child(${[i + 1]})`
-        ).value;
-      });
-      // Use it with page.select to select the item and trigger the change event
-
-      await frameContent.select("#accountId", value);
-      await frameContent.waitForSelector("#gridProductID_creditCardDetails");
-      await frameContent.$eval("#gridProductID_creditCardDetails", (element) =>
-        element.click()
-      ); // Clicking the link will indirectly cause a navigation
-
-      const totalmovementsContent = await frameContent.content();
-      let a = cheerio.load(totalmovementsContent);
-      if (name.includes("Cuenta")) {
-        let results = a("#gridDetail_savings tr")
-          .map((i, element) => ({
-            date: a(element).find("td:nth-of-type(1)").text().trim(),
-            amount: a(element).find("td:nth-of-type(5)").text().trim(),
-            reference: a(element).find("td:nth-of-type(4)").text().trim(),
-            description: a(element).find("td:nth-of-type(3)").text().trim(),
-          }))
-          .get();
-        e = results.shift();
-        info.movements.push(results);
-        fs.writeFileSync(
-          `temp/bcol/movements/movementsData${i - 1}#-#${id}.txt`,
-          JSON.stringify(results),
-          "utf8",
-          (err) => {
-            if (err) throw err;
-            console.log(`---- movementsTable${i - 1}#-#${id} has been saved!`);
-          }
-        );
+      if (selectOptions[i].name.includes("Tarjeta de")) {
+        await frameContent.waitForSelector("#ecard");
       } else {
-        let results = a("#gridProductID_creditCardDetails tr")
-          .map((i, element) => ({
-            date: a(element).find("td:nth-of-type(1)").text().trim(),
-            amount: a(element).find("td:nth-of-type(6)").text().trim(),
-            currency: a(element).find("td:nth-of-type(5)").text().trim(),
-            description: a(element).find("td:nth-of-type(2)").text().trim(),
-            payments: a(element).find("td:nth-of-type(3)").text().trim(),
-          }))
-          .get();
-        e = results.shift();
-        info.movements.push(results);
-        fs.writeFileSync(
-          `temp/bcol/movements/movementsData${i - 1}#-#${id}.txt`,
-          JSON.stringify(results),
-          "utf8",
-          (err) => {
-            if (err) throw err;
-            console.log(`---- movementsTable${i - 1}#-#${id} has been saved!`);
-          }
-        );
+        await frameContent.waitForSelector("#popoverSalT");
       }
+
+      const selectFrame = await frameContent.content();
+      console.log("frame content loaded");
+
+      console.log("Building overview...", selectOptions[i].name);
+      let overview = basicInfo(selectFrame, selectOptions[i].name);
+
+      console.log("Building movements...", selectOptions[i].name);
+      let movements = movementInfo(selectFrame, selectOptions[i].name);
+      overview.movements = movements;
+      info.push(overview);
+      // fs.writeFile(
+      //   __dirname + `/../temp/bcol/overview/overview#-#${id}.txt`,
+      //   JSON.stringify(overview),
+      //   "utf8",
+      //   (err) => {
+      //     if (err) throw err;
+      //     console.log(`overview#-#${id} been saved!`);
+      //   }
+      // );
     }
 
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
@@ -294,60 +181,97 @@ const getReports = async (req, res) => {
   }
 };
 
-const basicInfo = (html, accounts, cards) => {
+const basicInfo = (html, type) => {
   $ = cheerio.load(html);
-  let mappedAccounts = [],
-    mappedCards = [];
-  if (accounts.length > 1) {
-    accounts.forEach((account) => {
-      mappedAccounts.push({
-        type: $(`#${account} .panel_query_account_balances_left`).text(),
-        number: $(`#${account} .panel_query_account_balances_center p`)
-          .children()
-          .first()
-          .text(),
-        total: $(`#${account} .panel_query_account_balances_right`).text(),
-      });
-    });
-  } else if (accounts.length === 1) {
-    mappedAccounts.push({
-      type: $("#accaccount0 .panel_query_account_balances_left").text(),
-      number: $("#accaccount0 .panel_query_account_balances_center p")
-        .children()
-        .first()
-        .text(),
-      total: $("#accaccount0 .panel_query_account_balances_right").text(),
-    });
-  }
 
-  if (cards.length > 1) {
-    cards.forEach((card) => {
-      mappedCards.push({
-        cardType: $(`#${card} .panel_query_account_balances_left`).text(),
-        number: $(`#${card} .panel_query_account_balances_center p`)
-          .children()
-          .first()
+  if (type.includes("Cuenta de Ahorro")) {
+    return {
+      name: type,
+      account: {
+        available: $(".pg_pgd_frm_ctnt dl #popoverSalD").parent().next().text(),
+        savings: $(".pg_pgd_frm_ctnt dl #popoverSalCaBol")
+          .parent()
+          .next()
           .text(),
-        amountDueCop: $(`#${card} .panel_query_account_balances_right p br`)[0]
-          .previousSibling.nodeValue,
-        amountDueUsd: $(`#${card} .panel_query_account_balances_right p br`)[0]
-          .nextSibling.nodeValue,
-      });
-    });
-  } else if (cards.length === 1) {
-    mappedCards.push({
-      cardType: $("#carcards0 .panel_query_account_balances_left").text(),
-      number: $("#carcards0 .panel_query_account_balances_center p")
-        .children()
-        .first()
-        .text(),
-      amountDueCop: $("#carcards0 .panel_query_account_balances_right p br")[0]
-        .previousSibling.nodeValue,
-      amountDueUsd: $("#carcards0 .panel_query_account_balances_right p br")[0]
-        .nextSibling.nodeValue,
-    });
+        total: $(".pg_pgd_frm_ctnt dl #popoverSalT").parent().next().text(),
+      },
+    };
+  } else if (type.includes("Tarjeta de")) {
+    const columnOne = $(".dl-horizontal.dl_horizontal_desc").get(0).children
+    const [dateDue, minimumPaymentCOP, totalPaymentCOP, debtCOP, advanceAvailable, available] = columnOne.filter((child) => child.name === 'dd');
+    
+    const columnTwo = $(".dl-horizontal.dl_horizontal_desc").get(1).children
+    const [cardType, minimumPaymentUSD, totalPaymentUSD, debtUSD, _, exchangeRate] = columnTwo.filter((child) => child.name === 'dd');
+    return {
+      name: type,
+      exchangeRate: {
+        indicator: 'COP/USD',
+        rate: exchangeRate.children[0].data
+      },
+      account: {
+        available: available.children[0].data,
+        minimumPayment: {
+          ammount: {
+            cop: minimumPaymentCOP.children[0].data,
+            usd: minimumPaymentUSD.children[0].data,
+          },
+          dateDue: dateDue.children[0].data,
+        },
+        debt: {
+          cop: debtCOP.children[0].data,
+          usd: debtUSD.children[0].data,
+        },
+        totalPayment: {
+          cop: totalPaymentCOP.children[0].data,
+          usd: totalPaymentUSD.children[0].data,
+        },
+      },
+    };
   }
-  return { accounts: mappedAccounts, cards: mappedCards };
+};
+
+const movementInfo = (html, type) => {
+  let $ = cheerio.load(html);
+  let selector = type.includes("Cuenta")
+    ? "gridDetail_savings"
+    : "gridProductID_creditCardDetails";
+  let result = [];
+  let movementObj = {
+    date: "",
+    amount: "",
+    description: "",
+  };
+
+  $(`#${selector} tr`).each((i, element) => {
+    if (type.includes("Cuenta")) {
+      movementObj.date = $(element).find("td:nth-of-type(1)").text().trim();
+      movementObj.amount = $(element).find("td:nth-of-type(5)").text().trim();
+      movementObj.reference = $(element)
+        .find("td:nth-of-type(4)")
+        .text()
+        .trim();
+      movementObj.description = $(element)
+        .find("td:nth-of-type(3)")
+        .text()
+        .trim();
+      result.push(movementObj);
+    } else {
+      movementObj.date = $(element).find("td:nth-of-type(1)").text().trim();
+      movementObj.amount = {
+        value: $(element).find("td:nth-of-type(6)").text().trim(),
+        currency:
+          $(element).find("td:nth-of-type(5)").text().trim() === "$"
+            ? "COP"
+            : "USD",
+      };
+      movementObj.description = $(element)
+        .find("td:nth-of-type(2)")
+        .text()
+        .trim();
+      result.push(movementObj);
+    }
+  });
+  return result;
 };
 
 module.exports = { getReports };
