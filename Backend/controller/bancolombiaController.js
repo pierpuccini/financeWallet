@@ -10,7 +10,7 @@ const getReports = async (req, res) => {
   const browser = await puppeteer.launch({
     headless: false,
     defaultViewport: null,
-    slowMo: 20,
+    slowMo: 50,
   });
   const page = await browser.newPage();
   await page.setUserAgent(
@@ -125,16 +125,9 @@ const getReports = async (req, res) => {
         selectOptions.push(parsedOption);
       });
     console.log("dropdown options loaded");
-    for (i = 0; i <= selectOptions.length; i++) {
+    for (i = 0; i < selectOptions.length; i++) {
       console.log("selecting item");
       await frameContent.select("#accountId", selectOptions[i].value);
-
-      // await frameContent.waitForSelector(".pg_pgd_frm_ctnt", {
-      //   visible: true,
-      // });
-      // await frameContent.waitForSelector(".pg_grid_ctnt #histories", {
-      //   visible: true,
-      // });
 
       if (selectOptions[i].name.includes("Tarjeta de")) {
         await frameContent.waitForSelector("#ecard");
@@ -143,6 +136,14 @@ const getReports = async (req, res) => {
       }
 
       const selectFrame = await frameContent.content();
+      // fs.writeFile(
+      //   __dirname + `/../temp/bcol/in/content-frame-page.html`,
+      //   selectFrame,
+      //   "utf8",
+      //   (err) => {
+      //     if (err) throw err;
+      //   }
+      // );
       console.log("frame content loaded");
 
       console.log("Building overview...", selectOptions[i].name);
@@ -152,16 +153,16 @@ const getReports = async (req, res) => {
       let movements = movementInfo(selectFrame, selectOptions[i].name);
       overview.movements = movements;
       info.push(overview);
-      // fs.writeFile(
-      //   __dirname + `/../temp/bcol/overview/overview#-#${id}.txt`,
-      //   JSON.stringify(overview),
-      //   "utf8",
-      //   (err) => {
-      //     if (err) throw err;
-      //     console.log(`overview#-#${id} been saved!`);
-      //   }
-      // );
     }
+    fs.writeFile(
+      __dirname + `/../temp/bcol/overview/info#-#${id}.txt`,
+      JSON.stringify(info),
+      "utf8",
+      (err) => {
+        if (err) throw err;
+        console.log(`overview#-#${id} been saved!`);
+      }
+    );
 
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
     console.log("                              ");
@@ -173,7 +174,7 @@ const getReports = async (req, res) => {
     await frameContent.waitForSelector(".btn_Succed_Popup");
     /* TODO: cerrar sesion bancolombia */
     //await frameContent.click('.btn_Succed_Popup')
-    // await browser.close();
+    await browser.close();
     console.log("Browser closed");
     res.send(info);
   } catch (error) {
@@ -197,16 +198,30 @@ const basicInfo = (html, type) => {
       },
     };
   } else if (type.includes("Tarjeta de")) {
-    const columnOne = $(".dl-horizontal.dl_horizontal_desc").get(0).children
-    const [dateDue, minimumPaymentCOP, totalPaymentCOP, debtCOP, advanceAvailable, available] = columnOne.filter((child) => child.name === 'dd');
-    
-    const columnTwo = $(".dl-horizontal.dl_horizontal_desc").get(1).children
-    const [cardType, minimumPaymentUSD, totalPaymentUSD, debtUSD, _, exchangeRate] = columnTwo.filter((child) => child.name === 'dd');
+    const columnOne = $(".dl-horizontal.dl_horizontal_desc").get(0).children;
+    const [
+      dateDue,
+      minimumPaymentCOP,
+      totalPaymentCOP,
+      debtCOP,
+      advanceAvailable,
+      available,
+    ] = columnOne.filter((child) => child.name === "dd");
+
+    const columnTwo = $(".dl-horizontal.dl_horizontal_desc").get(1).children;
+    const [
+      cardType,
+      minimumPaymentUSD,
+      totalPaymentUSD,
+      debtUSD,
+      _,
+      exchangeRate,
+    ] = columnTwo.filter((child) => child.name === "dd");
     return {
       name: type,
       exchangeRate: {
-        indicator: 'COP/USD',
-        rate: exchangeRate.children[0].data
+        indicator: "COP/USD",
+        rate: exchangeRate.children[0].data,
       },
       account: {
         available: available.children[0].data,
@@ -232,45 +247,30 @@ const basicInfo = (html, type) => {
 
 const movementInfo = (html, type) => {
   let $ = cheerio.load(html);
-  let selector = type.includes("Cuenta")
-    ? "gridDetail_savings"
-    : "gridProductID_creditCardDetails";
-  let result = [];
-  let movementObj = {
-    date: "",
-    amount: "",
-    description: "",
-  };
 
-  $(`#${selector} tr`).each((i, element) => {
-    if (type.includes("Cuenta")) {
-      movementObj.date = $(element).find("td:nth-of-type(1)").text().trim();
-      movementObj.amount = $(element).find("td:nth-of-type(5)").text().trim();
-      movementObj.reference = $(element)
-        .find("td:nth-of-type(4)")
-        .text()
-        .trim();
-      movementObj.description = $(element)
-        .find("td:nth-of-type(3)")
-        .text()
-        .trim();
-      result.push(movementObj);
-    } else {
-      movementObj.date = $(element).find("td:nth-of-type(1)").text().trim();
-      movementObj.amount = {
-        value: $(element).find("td:nth-of-type(6)").text().trim(),
-        currency:
-          $(element).find("td:nth-of-type(5)").text().trim() === "$"
-            ? "COP"
-            : "USD",
-      };
-      movementObj.description = $(element)
-        .find("td:nth-of-type(2)")
-        .text()
-        .trim();
-      result.push(movementObj);
-    }
-  });
+  let result = [];
+  if (type.includes("Cuenta")) {
+    result = $("#gridDetail_savings tr")
+      .map((i, element) => ({
+        date: $(element).find("td:nth-of-type(1)").text().trim(),
+        amount: $(element).find("td:nth-of-type(5)").text().trim(),
+        id: $(element).find("td:nth-of-type(4)").text().trim(),
+        description: $(element).find("td:nth-of-type(3)").text().trim(),
+      }))
+      .get();
+  } else if (type.includes("Tarjeta")) {
+    result = $("#gridProductID_creditCardDetails tbody tr")
+      .map((i, element) => ({
+        date: $(element).find("td:nth-of-type(1)").text().trim(),
+        amount: {
+          value: $(element).find("td:nth-of-type(6)").text().trim(),
+          currency: $(element).find("td:nth-of-type(5)").text().trim(),
+        },
+        description: $(element).find("td:nth-of-type(2)").text().trim(),
+      }))
+      .get();
+  }
+
   return result;
 };
 

@@ -35,10 +35,7 @@ router.get("/test", daviviendaController.test);
 /* Routes & temp path creation for bcol */
 fs.mkdirSync(__dirname + "/../temp/bcol",{recursive: true});
 fs.mkdirSync(__dirname + "/../temp/bcol/in",{recursive: true});
-fs.mkdirSync(__dirname + "/../temp/bcol/movements",{recursive: true});
 fs.mkdirSync(__dirname + "/../temp/bcol/overview",{recursive: true});
-//TODO: THIS WILL BE REMOVED
-fs.mkdirSync(__dirname + "/../temp/bcol/preventive",{recursive: true});
 
 router.get("/bcol-get-reports", bancolombiaController.getReports);
 
