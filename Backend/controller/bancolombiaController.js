@@ -8,7 +8,7 @@ const getReports = async (req, res) => {
   console.log("\x1b[0m", "[started BANCOLOMBIA]");
   /* NOTE: Headless FALSE shows progress in real time */
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
     defaultViewport: null,
     slowMo: 50,
   });
