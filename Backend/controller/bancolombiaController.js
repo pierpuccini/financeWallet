@@ -134,16 +134,8 @@ const getReports = async (req, res) => {
       } else {
         await frameContent.waitForSelector("#popoverSalT");
       }
-
       const selectFrame = await frameContent.content();
-      // fs.writeFile(
-      //   __dirname + `/../temp/bcol/in/content-frame-page.html`,
-      //   selectFrame,
-      //   "utf8",
-      //   (err) => {
-      //     if (err) throw err;
-      //   }
-      // );
+      
       console.log("frame content loaded");
 
       console.log("Building overview...", selectOptions[i].name);
@@ -154,6 +146,7 @@ const getReports = async (req, res) => {
       overview.movements = movements;
       info.push(overview);
     }
+    
     fs.writeFile(
       __dirname + `/../temp/bcol/overview/info#-#${id}.txt`,
       JSON.stringify(info),

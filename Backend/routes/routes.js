@@ -13,6 +13,7 @@ const router = express.Router();
 /* Controllers */
 const daviviendaController = require("../controller/daviviendaController")
 const bancolombiaController = require("../controller/bancolombiaController")
+const bancodebogotaController = require("../controller/bancodebogotaController")
 
 // Get Message
 router.post("/text", (req, res) => {
@@ -38,5 +39,12 @@ fs.mkdirSync(__dirname + "/../temp/bcol/in",{recursive: true});
 fs.mkdirSync(__dirname + "/../temp/bcol/overview",{recursive: true});
 
 router.get("/bcol-get-reports", bancolombiaController.getReports);
+
+/* Routes & temp path creation for bbog */
+fs.mkdirSync(__dirname + "/../temp/bbog",{recursive: true});
+fs.mkdirSync(__dirname + "/../temp/bbog/in",{recursive: true});
+fs.mkdirSync(__dirname + "/../temp/bbog/overview",{recursive: true});
+
+router.get("/bbog-get-reports", bancodebogotaController.getReports);
 
 module.exports = router;
