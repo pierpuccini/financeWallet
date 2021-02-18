@@ -1,18 +1,35 @@
 /* React Imports */
-import React, { Fragment } from "react";
-/* Bootstrap */
-import Navbar from "react-bootstrap/Navbar";
+import React from "react";
+/* Assets */
+/* Containers */
+import Counters from "./containers/counters/Counters";
+/* Components */
+/* Themes */
+import useMediaQuery from "@material-ui/core/useMediaQuery";
+import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
+import CssBaseline from "@material-ui/core/CssBaseline";
+/* General */
+import "./App.css";
 
-import Message from "./Containers/MessageController";
-function App() {
-  return (
-    <Fragment>
-      <Navbar expand="xl" bg="primary" variant="dark">
-        <Navbar.Brand href="#">ToolBox Test</Navbar.Brand>
-      </Navbar>
-      <Message />
-    </Fragment>
+const App = () => {
+  const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+
+  const theme = React.useMemo(
+    () =>
+      createMuiTheme({
+        palette: {
+          type: prefersDarkMode ? "dark" : "light",
+        },
+      }),
+    [prefersDarkMode]
   );
-}
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Counters />
+      {/* <Routes /> */}
+    </ThemeProvider>
+  );
+};
 
 export default App;

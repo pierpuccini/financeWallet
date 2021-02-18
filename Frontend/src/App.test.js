@@ -1,15 +1,15 @@
-import React from 'react'
-import Enzyme, { shallow } from 'enzyme'
-import App from './App'
-import Adapter from 'enzyme-adapter-react-16'
-import 'jest-enzyme';
+import React from 'react';
+import { render } from '@testing-library/react';
+import { Provider } from 'react-redux';
+import store from './app/store';
+import App from './App';
 
-Enzyme.configure({ adapter: new Adapter() })
+test('renders learn react link', () => {
+  const { getByText } = render(
+    <Provider store={store}>
+      <App />
+    </Provider>
+  );
 
-describe('App renders?', () => {
-    test('renders', () => {
-        const wrapper = shallow(<App />)
-
-        expect(wrapper.exists()).toBe(true)
-    })
-})
+  expect(getByText(/learn/i)).toBeInTheDocument();
+});
