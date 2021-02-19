@@ -155,7 +155,7 @@ const getReports = async (req, res) => {
       info.push(overview);
     }
     fs.writeFile(
-      __dirname + `/../temp/bcol/overview/info#-#${id}.txt`,
+      __dirname + `/../temp/bcol/overview/info#-#${id}.json`,
       JSON.stringify(info),
       "utf8",
       (err) => {
