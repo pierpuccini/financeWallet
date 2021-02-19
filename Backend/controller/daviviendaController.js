@@ -152,7 +152,7 @@ const getReports = async (req, res) => {
     //   __dirname + `/../temp/davi/in/in#-#${id}.html`,
     //   pageContent,
     //   "utf8",
-    //   err => {
+    //   (err) => {
     //     if (err) throw err;
     //     console.log(`---- LoggedIn#-#${id} has been saved!`);
     //   }
@@ -160,17 +160,17 @@ const getReports = async (req, res) => {
 
     /* ----------------------------------- grabing basic info from html file  ----------------------------------- */
     console.log("   Getting basic info ...");
-    const overview = basicInfo(pageContent);
-    info = overview;
-    fs.writeFile(
-      __dirname + `/../temp/davi/overview/overview#-#${id}.txt`,
-      JSON.stringify(overview),
-      "utf8",
-      (err) => {
-        if (err) throw err;
-        console.log(`overview#-#${id} been saved!`);
-      }
-    );
+    info = basicInfo(pageContent);
+    // info = overview;
+    // fs.writeFile(
+    //   __dirname + `/../temp/davi/overview/overview#-#${id}.json`,
+    //   JSON.stringify(info),
+    //   "utf8",
+    //   (err) => {
+    //     if (err) throw err;
+    //     console.log(`overview#-#${id} been saved!`);
+    //   }
+    // );
 
     let $ = cheerio.load(pageContent);
 
@@ -208,7 +208,7 @@ const getReports = async (req, res) => {
         "//a[contains(., 'Últimos')]"
       );
 
-      if (movements.length > 0) {
+      if (movements.length > 0 && !info[i].name.includes("Fic")) {
         await movements[0].click();
         await frameContentDetails.waitFor(15000);
         let movementsTable = await frameContentDetails.$eval(
@@ -237,22 +237,22 @@ const getReports = async (req, res) => {
             .get();
         }
         info[i].movements = result;
-        fs.writeFileSync(
-          __dirname + `/../temp/davi/movements/movementsData${i}#-#${id}.txt`,
-          JSON.stringify(result),
-          "utf8",
-          (err) => {
-            if (err) throw err;
-            console.log(`---- movementsTable${i}#-#${id} has been saved!`);
-          }
-        );
-      } else {
+        console.log(`*** Succesfully retrevived ${info[i].name} movements ***`);
+        await page.click("#dashboardform\\:goToResumen");
+      } else if (movements.length <= 0) {
         throw new Error("Link not found");
       }
-
-      console.log("*** Succesfully retrevived past movements ***");
-      await page.click("#dashboardform\\:goToResumen");
     }
+
+    fs.writeFile(
+      __dirname + `/../temp/davi/overview/overview#-#${id}.json`,
+      JSON.stringify(info),
+      "utf8",
+      (err) => {
+        if (err) throw err;
+        console.log(`overview#-#${id} been saved!`);
+      }
+    );
 
     /* ----------------------------------- loging out and closing browser ----------------------------------- */
     console.log("                              ");
@@ -298,7 +298,7 @@ const basicInfo = (html) => {
 
   let servicesInfo = [];
   root.forEach((services) => {
-    name = services.querySelectorAll("td table tbody tr td")[0].innerHTML;
+    const name = services.querySelectorAll("td table tbody tr td")[0].innerHTML;
     let account = {};
     if (name.includes("Cuenta")) {
       account = {
@@ -307,7 +307,7 @@ const basicInfo = (html) => {
         savings: services.querySelectorAll("td table tbody tr td")[3].innerHTML,
         total: services.querySelectorAll("td table tbody tr td")[5].innerHTML,
       };
-    } else {
+    } else if (name.includes("Tarjeta de")) {
       account = {
         available: services.querySelectorAll("td table tbody tr td")[1]
           .innerHTML,
@@ -319,6 +319,15 @@ const basicInfo = (html) => {
         },
         debt: services.querySelectorAll("td table tbody tr td")[4].innerHTML,
         totalPayment: services.querySelectorAll("td table tbody tr td")[5]
+          .innerHTML,
+      };
+    } else if (name.includes("Fic")) {
+      account = {
+        available: services.querySelectorAll("td table tbody tr td")[2]
+          .innerHTML,
+        inmediateWithdrawl: services.querySelectorAll("td table tbody tr td")[3]
+          .innerHTML,
+        parcialWithdrawl: services.querySelectorAll("td table tbody tr td")[4]
           .innerHTML,
       };
     }
