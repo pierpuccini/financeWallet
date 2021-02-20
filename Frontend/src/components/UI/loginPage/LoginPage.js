@@ -1,16 +1,18 @@
 /* React */
 import React from "react";
 /* React router */
-// import { useHistory } from 'react-router-dom'; // if you use react-router
+import { useHistory } from "react-router-dom"; // if you use react-router
 /* Redux */
 import { useSelector } from "react-redux";
 /* Firebase */
 import { useFirebase, isEmpty } from "react-redux-firebase";
 import StyledFirebaseAuth from "react-firebaseui/StyledFirebaseAuth";
 
-function LoginPage() {
+const LoginPage = () => {
   const firebase = useFirebase();
   const auth = useSelector((state) => state.firebase.auth);
+
+  let history = useHistory();
 
   return (
     <div>
@@ -33,7 +35,7 @@ function LoginPage() {
           callbacks: {
             signInSuccessWithAuthResult: (authResult, redirectUrl) => {
               firebase.handleRedirectResult(authResult).then(() => {
-                // history.push(redirectUrl); if you use react router to redirect
+                history.push(redirectUrl);
               });
               return false;
             },
@@ -51,6 +53,6 @@ function LoginPage() {
       </div>
     </div>
   );
-}
+};
 
 export default LoginPage;

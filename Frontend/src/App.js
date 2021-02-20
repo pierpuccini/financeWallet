@@ -1,7 +1,7 @@
 /* React */
 import React, { useMemo } from "react";
 /* React Router */
-import { BrowserRouter, Switch, Route, Redirect } from "react-router-dom";
+import { Switch, Route, Redirect } from "react-router-dom";
 /* Redux */
 import { useSelector } from "react-redux";
 /* Firebase */
@@ -69,24 +69,23 @@ const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BrowserRouter>
-        <Switch>
-          <Route path="/login">
-            <AuthIsLoaded>
-              {/* Component containing a login which redirects
+
+      <Switch>
+        <Route path="/login">
+          <AuthIsLoaded>
+            {/* Component containing a login which redirects
               to /protected. NOTE: Not included in example */}
-              <LoginPage />
-              <div>login Auth is Loaded</div> {/* Rest of App Components */}
-            </AuthIsLoaded>
-          </Route>
-          <PrivateRoute path="/dashboard">
-            <AuthIsLoaded>
-              <div>Protected content Auth is Loaded</div>{" "}
-              {/* Rest of App Components */}
-            </AuthIsLoaded>
-          </PrivateRoute>
-        </Switch>
-      </BrowserRouter>
+            <LoginPage />
+            <div>login Auth is Loaded</div> {/* Rest of App Components */}
+          </AuthIsLoaded>
+        </Route>
+        <PrivateRoute path="/dashboard">
+          <AuthIsLoaded>
+            <div>Protected content Auth is Loaded</div>{" "}
+            {/* Rest of App Components */}
+          </AuthIsLoaded>
+        </PrivateRoute>
+      </Switch>
     </ThemeProvider>
   );
 };

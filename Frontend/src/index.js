@@ -1,6 +1,8 @@
 /* React Imports */
 import React from "react";
 import ReactDOM from "react-dom";
+/* React router */
+import { BrowserRouter } from "react-router-dom";
 /* App Imports */
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
@@ -41,7 +43,9 @@ ReactDOM.render(
   <React.StrictMode>
     <Provider store={store}>
       <ReactReduxFirebaseProvider {...rrfProps}>
-        <App />
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
       </ReactReduxFirebaseProvider>
     </Provider>
   </React.StrictMode>,
