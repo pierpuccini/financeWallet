@@ -14,16 +14,16 @@ import store from "./app/store";
 /* Firebase Imports */
 import firebase from "firebase/app";
 import "firebase/auth";
+import "firebase/firestore";
 import fbConfig from "./firebase.config";
-// import 'firebase/firestore' // <- needed if using firestore
 /* React-redux-firebase */
 import { ReactReduxFirebaseProvider } from "react-redux-firebase";
-// import { createFirestoreInstance, firestoreReducer } from 'redux-firestore' // <- needed if using firestore
+import { createFirestoreInstance } from "redux-firestore";
 
 // react-redux-firebase config
 const rrfConfig = {
   userProfile: "users",
-  // useFirestoreForProfile: true // Firestore for Profile instead of Realtime DB
+  useFirestoreForProfile: true,
   // enableClaims: true // Get custom claims along with the profile
 };
 
@@ -36,7 +36,7 @@ const rrfProps = {
   firebase,
   config: rrfConfig,
   dispatch: store.dispatch,
-  // createFirestoreInstance // <- needed if using firestore
+  createFirestoreInstance, // <- needed if using firestore
 };
 
 ReactDOM.render(

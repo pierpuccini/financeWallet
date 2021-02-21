@@ -35,6 +35,7 @@ const LoginPage = () => {
           callbacks: {
             signInSuccessWithAuthResult: (authResult, redirectUrl) => {
               firebase.handleRedirectResult(authResult).then(() => {
+                console.log(redirectUrl);
                 history.push(redirectUrl);
               });
               return false;
