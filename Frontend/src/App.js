@@ -73,15 +73,12 @@ const App = () => {
       <Switch>
         <Route path="/login">
           <AuthIsLoaded>
-            {/* Component containing a login which redirects
-              to /protected. NOTE: Not included in example */}
             <LoginPage />
-            <div>login Auth is Loaded</div> {/* Rest of App Components */}
           </AuthIsLoaded>
         </Route>
         <PrivateRoute path="/dashboard">
           <AuthIsLoaded>
-            <div>Protected content Auth is Loaded</div>{" "}
+            <div>Protected content Auth is Loaded</div>
             {/* Rest of App Components */}
           </AuthIsLoaded>
         </PrivateRoute>

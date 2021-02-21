@@ -1,21 +1,27 @@
 /* React */
 import React from "react";
 /* React router */
-import { useHistory } from "react-router-dom"; // if you use react-router
+import { Redirect } from "react-router-dom"; // if you use react-router
 /* Redux */
 import { useSelector } from "react-redux";
 /* Firebase */
-import { useFirebase, isEmpty } from "react-redux-firebase";
+import { useFirebase, isLoaded, isEmpty } from "react-redux-firebase";
 import StyledFirebaseAuth from "react-firebaseui/StyledFirebaseAuth";
+/* Components */
+import Loader from "../../UI/loader/PngLoader";
 
 const LoginPage = () => {
   const firebase = useFirebase();
   const auth = useSelector((state) => state.firebase.auth);
 
-  let history = useHistory();
+  let element = (
+    <div className="App">
+      <Loader />
+    </div>
+  );
 
-  return (
-    <div>
+  if (isLoaded(auth) && isEmpty(auth)) {
+    element = (
       <StyledFirebaseAuth
         uiConfig={{
           signInFlow: "redirect",
@@ -32,28 +38,15 @@ const LoginPage = () => {
               defaultCountry: "CO",
             },
           ],
-          callbacks: {
-            signInSuccessWithAuthResult: (authResult, redirectUrl) => {
-              firebase.handleRedirectResult(authResult).then(() => {
-                console.log(redirectUrl);
-                history.push(redirectUrl);
-              });
-              return false;
-            },
-          },
         }}
         firebaseAuth={firebase.auth()}
       />
-      <div>
-        <h2>Auth</h2>
-        {isEmpty(auth) ? (
-          <span>Not Authed</span>
-        ) : (
-          <pre>{JSON.stringify(auth, null, 2)}</pre>
-        )}
-      </div>
-    </div>
-  );
+    );
+  } else if (isLoaded(auth) && !isEmpty(auth)) {
+    element = <Redirect to="/dashboard" />;
+  }
+
+  return element;
 };
 
 export default LoginPage;
