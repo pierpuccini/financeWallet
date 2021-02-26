@@ -8,7 +8,7 @@ import { useSelector } from "react-redux";
 import { useFirebase, isLoaded, isEmpty } from "react-redux-firebase";
 import StyledFirebaseAuth from "react-firebaseui/StyledFirebaseAuth";
 /* Components */
-import Loader from "../../UI/loader/PngLoader";
+import Loader from "../../components/UI/loader/PngLoader";
 
 const LoginPage = () => {
   const firebase = useFirebase();

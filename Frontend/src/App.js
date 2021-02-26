@@ -5,12 +5,13 @@ import { Switch, Route, Redirect } from "react-router-dom";
 /* Redux */
 import { useSelector } from "react-redux";
 /* Firebase */
-import { isLoaded, isEmpty } from "react-redux-firebase";
+import { isLoaded } from "react-redux-firebase";
 /* Assets */
 /* Containers */
+import LoginPage from "./containers/loginPage/LoginPage";
 /* Components */
-import LoginPage from "./components/UI/loginPage/LoginPage";
 import Loader from "./components/UI/loader/PngLoader";
+import PrivateRoute from "./components/UI/privateRoute/PrivateRoute";
 /* Themes */
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
@@ -29,30 +30,6 @@ const AuthIsLoaded = ({ children }) => {
   return children;
 };
 
-// A wrapper for <Route> that redirects to the login
-// screen if you're not yet authenticated or if auth is not
-// yet loaded
-const PrivateRoute = ({ children, ...rest }) => {
-  const auth = useSelector((state) => state.firebase.auth);
-  return (
-    <Route
-      {...rest}
-      render={({ location }) =>
-        isLoaded(auth) && !isEmpty(auth) ? (
-          children
-        ) : (
-          <Redirect
-            to={{
-              pathname: "/login",
-              state: { from: location },
-            }}
-          />
-        )
-      }
-    />
-  );
-};
-
 const App = () => {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
 
@@ -69,20 +46,18 @@ const App = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-
-      <Switch>
-        <Route path="/login">
-          <AuthIsLoaded>
+      <AuthIsLoaded>
+        <Switch>
+          <Route path="/login">
             <LoginPage />
-          </AuthIsLoaded>
-        </Route>
-        <PrivateRoute path="/dashboard">
-          <AuthIsLoaded>
+          </Route>
+          <PrivateRoute path="/dashboard">
             <div>Protected content Auth is Loaded</div>
             {/* Rest of App Components */}
-          </AuthIsLoaded>
-        </PrivateRoute>
-      </Switch>
+          </PrivateRoute>
+          <Redirect to="/dashboard" />
+        </Switch>
+      </AuthIsLoaded>
     </ThemeProvider>
   );
 };
