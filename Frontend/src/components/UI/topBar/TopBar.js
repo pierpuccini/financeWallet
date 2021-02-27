@@ -20,7 +20,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function MenuAppBar() {
+const MenuAppBar = () => {
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -79,4 +79,6 @@ export default function MenuAppBar() {
       </Toolbar>
     </AppBar>
   );
-}
+};
+
+export default MenuAppBar;
