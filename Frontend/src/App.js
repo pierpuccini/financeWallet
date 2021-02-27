@@ -1,12 +1,12 @@
 /* React */
 import React, { useMemo, cloneElement } from "react";
 import PropTypes from "prop-types";
-/* React Router */
-import { Switch, Route, Redirect } from "react-router-dom";
+/* Routes */
+import Routes from "./containers/Routes";
 /* Redux */
 import { useSelector } from "react-redux";
 /* Firebase */
-import { isLoaded } from "react-redux-firebase";
+import { isLoaded, isEmpty } from "react-redux-firebase";
 /* Material Imports */
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -15,11 +15,8 @@ import useScrollTrigger from "@material-ui/core/useScrollTrigger";
 import Container from "@material-ui/core/Container";
 /* Assets */
 /* Containers */
-import LoginPage from "./containers/loginPage/LoginPage";
-import Dashboard from "./containers/dashboard/Dashboard";
 /* Components */
-import Loader from "./components/UI/loader/PngLoader";
-import PrivateRoute from "./components/UI/privateRoute/PrivateRoute";
+import AuthIsLoaded from "./components/UI/authIsLoaded/AuthIsLoaded";
 /* Themes */
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
@@ -27,19 +24,9 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 /* General */
 import "./App.css";
 
-const AuthIsLoaded = ({ children }) => {
-  const auth = useSelector((state) => state.firebase.auth);
-  if (!isLoaded(auth))
-    return (
-      <div className="App">
-        <Loader />
-      </div>
-    );
-  return children;
-};
-
 const App = (props) => {
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
+  const auth = useSelector((state) => state.firebase.auth);
 
   const theme = useMemo(
     () =>
@@ -51,9 +38,8 @@ const App = (props) => {
     [prefersDarkMode]
   );
 
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+  const authedBasicUI = (
+    <React.Fragment>
       <ElevationScroll {...props}>
         <AppBar>
           <Toolbar>
@@ -62,16 +48,16 @@ const App = (props) => {
         </AppBar>
       </ElevationScroll>
       <Toolbar />
+    </React.Fragment>
+  );
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      {isLoaded(auth) && !isEmpty(auth) ? authedBasicUI : null}
       <Container>
         <AuthIsLoaded>
-          <Switch>
-            <Route path="/login" component={LoginPage}></Route>
-            <PrivateRoute
-              path="/dashboard"
-              component={Dashboard}
-            ></PrivateRoute>
-            <Redirect to="/dashboard" />
-          </Switch>
+          <Routes />
         </AuthIsLoaded>
       </Container>
     </ThemeProvider>
