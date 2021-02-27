@@ -14,12 +14,12 @@ const Routes = () => {
   const routesArray = [
     {
       route: "/login",
-      comp: <LoginPage />,
+      comp: LoginPage,
       protected: false,
     },
     {
       route: "/dashboard",
-      comp: <Dashboard />,
+      comp: Dashboard,
       protected: true,
     },
   ];
@@ -28,16 +28,17 @@ const Routes = () => {
     <Suspense fallback={<Loader />}>
       <Switch>
         {routesArray.map((route) => {
+          const RouteComp = route.comp;
           if (route.protected) {
             return (
               <PrivateRoute key={route.route} path={route.route}>
-                {route.comp}
+                <RouteComp />
               </PrivateRoute>
             );
           }
           return (
             <Route key={route.route} path={route.route}>
-              {route.comp}
+              <RouteComp />
             </Route>
           );
         })}
