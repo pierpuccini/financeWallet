@@ -1,5 +1,8 @@
 /* React */
 import React, { useState } from "react";
+/* React Router */
+import { withRouter } from "react-router";
+
 /* Material Imports */
 import { makeStyles } from "@material-ui/core/styles";
 import AppBar from "@material-ui/core/AppBar";
@@ -20,7 +23,13 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const MenuAppBar = () => {
+const MenuAppBar = (props) => {
+  const { location } = props;
+
+  const NAMES = {
+    "/dashboard": "Banky Dashboard",
+  };
+
   const classes = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -45,7 +54,7 @@ const MenuAppBar = () => {
           <MenuIcon />
         </IconButton>
         <Typography variant="h6" className={classes.title}>
-          Photos
+          {NAMES[location.pathname]}
         </Typography>
         <div>
           <IconButton
@@ -81,4 +90,4 @@ const MenuAppBar = () => {
   );
 };
 
-export default MenuAppBar;
+export default withRouter(MenuAppBar);
