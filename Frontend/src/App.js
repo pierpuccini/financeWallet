@@ -1,5 +1,5 @@
 /* React */
-import React, { useMemo, cloneElement } from "react";
+import React, { useState, useMemo, cloneElement } from "react";
 import PropTypes from "prop-types";
 /* Routes */
 import Routes from "./containers/Routes";
@@ -9,12 +9,14 @@ import { useSelector } from "react-redux";
 import { isLoaded, isEmpty } from "react-redux-firebase";
 /* Material Imports */
 import useScrollTrigger from "@material-ui/core/useScrollTrigger";
+import SwipeableDrawer from "@material-ui/core/SwipeableDrawer";
 import Container from "@material-ui/core/Container";
 /* Assets */
 /* Containers */
 /* Components */
 import AuthIsLoaded from "./components/UI/authIsLoaded/AuthIsLoaded";
 import TopBar from "./components/UI/topBar/TopBar";
+import SideList from "./components/UI/sideList/SideList";
 /* Themes */
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
@@ -23,8 +25,15 @@ import CssBaseline from "@material-ui/core/CssBaseline";
 import "./App.css";
 
 const App = (props) => {
+  const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const auth = useSelector((state) => state.firebase.auth);
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const toggleDrawer = (open) => {
+    setDrawerOpen(open);
+  };
 
   const theme = useMemo(
     () =>
@@ -36,11 +45,32 @@ const App = (props) => {
     [prefersDarkMode]
   );
 
+  const sideListHandleNavChange = (event, newValue) => {
+    // resetReduxErrors();
+    // history.push({ state: { overwriteLocalNavState: newValue } });
+  };
+
   const authedBasicUI = (
     <React.Fragment>
       <ElevationScroll {...props}>
-        <TopBar />
+        <TopBar toggleDrawer={toggleDrawer} drawerState={drawerOpen} />
       </ElevationScroll>
+      <SwipeableDrawer
+        disableBackdropTransition={!iOS}
+        disableDiscovery={iOS}
+        open={drawerOpen}
+        onClose={() => {
+          toggleDrawer(false);
+        }}
+        onOpen={() => {
+          toggleDrawer(true);
+        }}
+      >
+        <SideList
+          toggleDrawer={toggleDrawer}
+          onChange={sideListHandleNavChange}
+        />
+      </SwipeableDrawer>
     </React.Fragment>
   );
 

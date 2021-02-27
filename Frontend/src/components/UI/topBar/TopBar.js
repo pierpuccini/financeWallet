@@ -24,7 +24,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const MenuAppBar = (props) => {
-  const { location } = props;
+  const { location, toggleDrawer, drawerState } = props;
 
   const NAMES = {
     "/dashboard": "Banky Dashboard",
@@ -50,6 +50,9 @@ const MenuAppBar = (props) => {
           className={classes.menuButton}
           color="inherit"
           aria-label="menu"
+          onClick={() => {
+            toggleDrawer(!drawerState);
+          }}
         >
           <MenuIcon />
         </IconButton>
