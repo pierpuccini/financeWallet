@@ -20,7 +20,7 @@ const SideList = (props) => {
   //Items above divider
   const sideNavigationItems = [
     {
-      text: "EduCoins",
+      text: "Banky",
       url: "home",
       icon: <CoinIcon width="32px" height="32px" />,
     },
