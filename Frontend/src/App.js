@@ -30,7 +30,7 @@ const App = (props) => {
     () =>
       createMuiTheme({
         palette: {
-          type: prefersDarkMode ? "dark" : "light",
+          mode: prefersDarkMode ? "dark" : "light",
         },
       }),
     [prefersDarkMode]
