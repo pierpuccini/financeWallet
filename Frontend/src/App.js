@@ -8,15 +8,13 @@ import { useSelector } from "react-redux";
 /* Firebase */
 import { isLoaded, isEmpty } from "react-redux-firebase";
 /* Material Imports */
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import Typography from "@material-ui/core/Typography";
 import useScrollTrigger from "@material-ui/core/useScrollTrigger";
 import Container from "@material-ui/core/Container";
 /* Assets */
 /* Containers */
 /* Components */
 import AuthIsLoaded from "./components/UI/authIsLoaded/AuthIsLoaded";
+import TopBar from "./components/UI/topBar/TopBar";
 /* Themes */
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
@@ -41,13 +39,8 @@ const App = (props) => {
   const authedBasicUI = (
     <React.Fragment>
       <ElevationScroll {...props}>
-        <AppBar>
-          <Toolbar>
-            <Typography variant="h6">Scroll to Elevate App Bar</Typography>
-          </Toolbar>
-        </AppBar>
+        <TopBar />
       </ElevationScroll>
-      <Toolbar />
     </React.Fragment>
   );
 
