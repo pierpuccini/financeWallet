@@ -17,6 +17,7 @@ import Container from "@material-ui/core/Container";
 import AuthIsLoaded from "./components/UI/authIsLoaded/AuthIsLoaded";
 import TopBar from "./components/UI/topBar/TopBar";
 import SideList from "./components/UI/sideList/SideList";
+import BottomNav from "./components/UI/bottomNav/BottomNav";
 /* Themes */
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { createMuiTheme, ThemeProvider } from "@material-ui/core/styles";
@@ -71,6 +72,7 @@ const App = (props) => {
           onChange={sideListHandleNavChange}
         />
       </SwipeableDrawer>
+      <BottomNav />
     </React.Fragment>
   );
 
