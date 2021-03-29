@@ -24,13 +24,28 @@ import { createFirestoreInstance } from "redux-firestore";
 const rrfConfig = {
   userProfile: "users",
   useFirestoreForProfile: true,
-  // enableClaims: true // Get custom claims along with the profile
+  enableRedirectHandling: false,
+  resetBeforeLogin: false,
+  logErrors: process.env.NODE_ENV === "development" ? true : false,
+  // enableClaims: true, // Get custom claims along with the profile,
+  // profileFactory: (userData, profileData, firebase) => {
+  //   console.log("userData", userData);
+  //   console.log("profileData", profileData);
+  //   console.log("firebase", firebase);
+  //   // how profiles are stored in database
+  //   const { user } = userData;
+  //   return {
+  //     email: user.email,
+  //     phoneNumber: user.phoneNumber,
+  //     banks: 0,
+  //   };
+  // },
 };
 
 // Initialize firebase instance
 firebase.initializeApp(fbConfig);
 // Initialize other services on firebase instance
-// firebase.firestore() // <- needed if using firestore
+firebase.firestore(); // <- needed if using firestore
 
 const rrfProps = {
   firebase,
