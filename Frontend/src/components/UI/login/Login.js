@@ -10,7 +10,7 @@ const Login = () => {
   return (
     <StyledFirebaseAuth
       uiConfig={{
-        signInFlow: "redirect",
+        signInFlow: "popup",
         signInSuccessUrl: "/dashboard",
         signInOptions: [
           firebase.auth.GoogleAuthProvider.PROVIDER_ID,
