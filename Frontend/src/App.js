@@ -1,6 +1,8 @@
 /* React */
 import React, { useState, useMemo, cloneElement } from "react";
 import PropTypes from "prop-types";
+/* React Router */
+import { useHistory } from "react-router-dom";
 /* Routes */
 import Routes from "./containers/Routes";
 /* Redux */
@@ -29,6 +31,7 @@ const App = (props) => {
   const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
   const prefersDarkMode = useMediaQuery("(prefers-color-scheme: dark)");
   const auth = useSelector((state) => state.firebase.auth);
+  const history = useHistory();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -46,9 +49,8 @@ const App = (props) => {
     [prefersDarkMode]
   );
 
-  const sideListHandleNavChange = (event, newValue) => {
-    // resetReduxErrors();
-    // history.push({ state: { overwriteLocalNavState: newValue } });
+  const handleNavChange = (event, newValue) => {
+    history.push(`/${newValue}`);
   };
 
   const authedBasicUI = (
@@ -67,12 +69,9 @@ const App = (props) => {
           toggleDrawer(true);
         }}
       >
-        <SideList
-          toggleDrawer={toggleDrawer}
-          onChange={sideListHandleNavChange}
-        />
+        <SideList toggleDrawer={toggleDrawer} onChange={handleNavChange} />
       </SwipeableDrawer>
-      <BottomNav />
+      <BottomNav onChange={handleNavChange} />
     </React.Fragment>
   );
 

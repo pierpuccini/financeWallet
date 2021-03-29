@@ -9,6 +9,7 @@ import PrivateRoute from "../components/UI/privateRoute/PrivateRoute";
 /* Lazy imports */
 const LoginPage = lazy(() => import("./loginPage/LoginPage"));
 const Dashboard = lazy(() => import("./dashboard/Dashboard"));
+const Wallet = lazy(() => import("./wallet/Wallet"));
 
 const Routes = () => {
   const routesArray = [
@@ -20,6 +21,11 @@ const Routes = () => {
     {
       route: "/dashboard",
       comp: Dashboard,
+      protected: true,
+    },
+    {
+      route: "/wallet",
+      comp: Wallet,
       protected: true,
     },
   ];

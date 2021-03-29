@@ -8,15 +8,14 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
 import HomeOutlinedIcon from "@material-ui/icons/HomeOutlined";
-import FolderOutlinedIcon from "@material-ui/icons/FolderOutlined";
+// import FolderOutlinedIcon from "@material-ui/icons/FolderOutlined";
 import AccountBalanceWalletOutlinedIcon from "@material-ui/icons/AccountBalanceWalletOutlined";
-import TrendingUpOutlinedIcon from "@material-ui/icons/TrendingUpOutlined";
-import MenuBookOutlinedIcon from "@material-ui/icons/MenuBookOutlined";
-import PlaceOutlinedIcon from "@material-ui/icons/PlaceOutlined";
 //App imports
 import CoinIcon from "../coinIcon/CoinIcon";
 
 const SideList = (props) => {
+  const { toggleDrawer, onChange } = props;
+
   //Items above divider
   const sideNavigationItems = [
     {
@@ -33,39 +32,24 @@ const SideList = (props) => {
       icon: <HomeOutlinedIcon />,
     },
     {
-      text: "Challenges",
-      url: "challenges",
-      icon: <MenuBookOutlinedIcon />,
-    },
-    {
-      text: "Power Ups",
-      url: "power-ups/view",
-      icon: <TrendingUpOutlinedIcon />,
-    },
-    {
-      text: "Classrooms",
-      url: "classrooms",
-      icon: <PlaceOutlinedIcon />,
-    },
-    {
       text: "Wallet",
       url: "wallet",
       icon: <AccountBalanceWalletOutlinedIcon />,
     },
-    {
-      text: "File Archive",
-      url: "file-archive",
-      icon: <FolderOutlinedIcon />,
-    },
+    // {
+    //   text: "File Archive",
+    //   url: "file-archive",
+    //   icon: <FolderOutlinedIcon />,
+    // },
   ];
   return (
     <div
       role="presentation"
       onClick={() => {
-        props.toggleDrawer(false);
+        toggleDrawer(false);
       }}
       onKeyDown={() => {
-        props.toggleDrawer(false);
+        toggleDrawer(false);
       }}
     >
       <List>
@@ -74,7 +58,7 @@ const SideList = (props) => {
             button
             key={item.url}
             onClick={() => {
-              props.onChange(null, item.url);
+              onChange(null, item.url);
             }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
@@ -89,7 +73,7 @@ const SideList = (props) => {
             button
             key={items.url}
             onClick={() => {
-              props.onChange(null, items.url);
+              onChange(null, items.url);
             }}
           >
             <ListItemIcon>{items.icon}</ListItemIcon>

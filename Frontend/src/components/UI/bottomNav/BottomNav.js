@@ -22,19 +22,20 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function BottomNav() {
+function BottomNav(props) {
   const classes = useStyles();
 
+  const { onChange } = props;
   const navRoute = "home";
-
-  const handleNavChange = () => {};
 
   return (
     <BottomNavigation
       id="footer"
       className={classes.bottomNav}
       value={navRoute}
-      onChange={handleNavChange}
+      onChange={() => {
+        onChange(null, navRoute);
+      }}
       showLabels
     >
       <BottomNavigationAction
