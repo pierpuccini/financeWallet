@@ -25,15 +25,18 @@
 .App-link {
   color: rgb(112, 76, 182);
 }
+.App-container {
+  margin-top: 24px;
+}
 
 @keyframes App-logo-float {
   0% {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(10px)
+    transform: translateY(10px);
   }
   100% {
-    transform: translateY(0px)
+    transform: translateY(0px);
   }
 }

@@ -79,7 +79,7 @@ const App = (props) => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       {isLoaded(auth) && !isEmpty(auth) ? authedBasicUI : null}
-      <Container>
+      <Container className="App-container">
         <AuthIsLoaded>
           <Routes />
         </AuthIsLoaded>
