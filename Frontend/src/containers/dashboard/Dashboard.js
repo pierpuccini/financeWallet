@@ -24,7 +24,7 @@ const Dashboard = () => {
     <Container className={classes.root}>
       <Grid container spacing={3}>
         <Grid item xs={12}>
-          <Paper className={classes.paper}></Paper>
+          <Paper className={classes.paper}>No banks configured</Paper>
         </Grid>
         {/* <Grid item xs={6}>
           <Paper className={classes.paper}>xs=6</Paper>
