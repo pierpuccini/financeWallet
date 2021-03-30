@@ -27,6 +27,10 @@ const useStyles = makeStyles((theme) => ({
     marginTop: 0,
   },
   paper: {
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
     padding: theme.spacing(2),
     textAlign: "center",
     color: theme.palette.text.secondary,
@@ -78,11 +82,13 @@ const AccCreator = () => {
         <Grid item xs={6}>
           <Paper className={classes.paper}>
             <BankIcon style={{ fontSize: 59 }} />
+            Bank Link
           </Paper>
         </Grid>
         <Grid item xs={6}>
           <Paper className={classes.paper}>
             <CardWithCoinsIcon style={{ fontSize: 59 }} />
+            Manual Account
           </Paper>
         </Grid>
       </Grid>
