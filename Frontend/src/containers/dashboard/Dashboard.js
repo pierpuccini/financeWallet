@@ -1,12 +1,10 @@
 /* React */
 import React from "react";
-/* Redux */
-import { useSelector } from "react-redux";
 /* Material Imports */
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import Grid from "@material-ui/core/Grid";
-import Paper from "@material-ui/core/Paper";
+// import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 /* Icons */
@@ -31,7 +29,6 @@ const useStyles = makeStyles((theme) => ({
 
 const Dashboard = () => {
   const classes = useStyles();
-  const profile = useSelector((state) => state.firebase.profile);
 
   return (
     <Container className={classes.root}>
