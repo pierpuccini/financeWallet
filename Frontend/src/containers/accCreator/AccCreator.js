@@ -34,6 +34,15 @@ const useStyles = makeStyles((theme) => ({
     padding: theme.spacing(2),
     textAlign: "center",
     color: theme.palette.text.secondary,
+    borderRadius: "10px",
+    borderColor: "transparent",
+    borderWidth: "3px",
+    borderStyle: "solid",
+    "&:hover": {
+      borderColor: theme.palette.primary.main,
+      borderWidth: "3px",
+      borderStyle: "solid",
+    },
   },
   button: {
     margin: theme.spacing(1),
