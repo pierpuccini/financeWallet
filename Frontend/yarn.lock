@@ -1474,6 +1474,11 @@
   resolved "https://registry.npmjs.org/@firebase/webchannel-wrapper/-/webchannel-wrapper-0.4.1.tgz"
   integrity sha512-0yPjzuzGMkW1GkrC8yWsiN7vt1OzkMIi9HgxRmKREZl2wnNPOKo/yScTjXf/O57HM8dltqxPF6jlNLFVtc2qdw==
 
+"@fontsource/quicksand@^4.2.2":
+  version "4.2.2"
+  resolved "https://registry.yarnpkg.com/@fontsource/quicksand/-/quicksand-4.2.2.tgz#50811e16611266dcee8a8e0767e770b23e68ed79"
+  integrity sha512-YaEG3b5eST4eyj2E28tkJJwnUSMP/zvxI7K/Nx9mkk5aqgDp2WJFzcQ84MFnFVwgy+mZodpzPaPJ6KGtv0q/lg==
+
 "@fontsource/roboto@^4.1.0":
   version "4.2.1"
   resolved "https://registry.npmjs.org/@fontsource/roboto/-/roboto-4.2.1.tgz"

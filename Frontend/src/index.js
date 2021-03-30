@@ -7,7 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
 import "./index.css";
-import "fontsource-roboto";
+import "@fontsource/quicksand";
 /* Redux Imports */
 import { Provider } from "react-redux";
 import store from "./app/store";
