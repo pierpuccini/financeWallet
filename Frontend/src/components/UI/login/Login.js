@@ -1,11 +1,14 @@
 /* React */
 import React from "react";
+/* React Router */
+import { useHistory } from "react-router-dom";
 /* Firebase */
 import { useFirebase } from "react-redux-firebase";
 import StyledFirebaseAuth from "react-firebaseui/StyledFirebaseAuth";
 
 const Login = () => {
   const firebase = useFirebase();
+  const history = useHistory();
 
   return (
     <StyledFirebaseAuth
@@ -24,6 +27,14 @@ const Login = () => {
             defaultCountry: "CO",
           },
         ],
+        callbacks: {
+          signInSuccessWithAuthResult: (authResult, redirectUrl) => {
+            firebase.handleRedirectResult(authResult).then(() => {
+              history.push();
+            });
+            return false;
+          },
+        },
       }}
       firebaseAuth={firebase.auth()}
     />

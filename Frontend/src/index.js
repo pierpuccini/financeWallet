@@ -28,18 +28,18 @@ const rrfConfig = {
   resetBeforeLogin: false,
   logErrors: process.env.NODE_ENV === "development" ? true : false,
   // enableClaims: true, // Get custom claims along with the profile,
-  // profileFactory: (userData, profileData, firebase) => {
-  //   console.log("userData", userData);
-  //   console.log("profileData", profileData);
-  //   console.log("firebase", firebase);
-  //   // how profiles are stored in database
-  //   const { user } = userData;
-  //   return {
-  //     email: user.email,
-  //     phoneNumber: user.phoneNumber,
-  //     banks: 0,
-  //   };
-  // },
+  profileFactory: (userData) => {
+    // how profiles are stored in database
+    const { displayName, email, phoneNumber, uid, photoURL } = userData;
+    return {
+      displayName,
+      email,
+      phoneNumber,
+      uid,
+      photoURL,
+      banks: 0,
+    };
+  },
 };
 
 // Initialize firebase instance
