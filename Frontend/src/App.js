@@ -7,7 +7,7 @@ import { useHistory } from "react-router-dom";
 import Routes from "./containers/Routes";
 /* Redux */
 import { useSelector } from "react-redux";
-/* Firebase */
+/* React Redux Firebase */
 import { isLoaded, isEmpty } from "react-redux-firebase";
 /* Material Imports */
 import useScrollTrigger from "@material-ui/core/useScrollTrigger";
