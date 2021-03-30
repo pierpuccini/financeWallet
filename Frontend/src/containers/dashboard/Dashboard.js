@@ -1,5 +1,7 @@
 /* React */
 import React from "react";
+/* React Router */
+import { useHistory } from "react-router-dom";
 /* Material Imports */
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
@@ -29,18 +31,26 @@ const useStyles = makeStyles((theme) => ({
 
 const Dashboard = () => {
   const classes = useStyles();
+  const history = useHistory();
+
+  const handleNavChange = (navTo) => {
+    history.push(`/${navTo}`);
+  };
 
   return (
     <Container className={classes.root}>
-      <Typography variant="h4" gutterBottom>
-        Budgets
+      <Typography variant="h5" gutterBottom>
+        Accounts
       </Typography>
       <Button
         variant="contained"
         className={classes.button}
+        onClick={() => {
+          handleNavChange("create-account");
+        }}
         startIcon={<AddCircleIcon />}
       >
-        Create budget
+        Create account
       </Button>
       <Grid container spacing={3}>
         <Grid item xs={12}></Grid>
