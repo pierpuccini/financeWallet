@@ -3,10 +3,10 @@ import React from "react";
 /* Material UI */
 import SvgIcon from "@material-ui/core/SvgIcon";
 /* App icons */
-import { ReactComponent as miniBank } from "../../../assets/miniBank.svg";
+import { ReactComponent as miniBank } from "../../../assets/svgs/miniBank.svg";
 
-const CoinIcon = (props) => {
+const BankIcon = (props) => {
   return <SvgIcon {...props} component={miniBank}></SvgIcon>;
 };
 
-export default CoinIcon;
+export default BankIcon;

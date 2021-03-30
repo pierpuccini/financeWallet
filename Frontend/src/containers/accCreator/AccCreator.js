@@ -12,7 +12,8 @@ import IconButton from "@material-ui/core/IconButton";
 /* Icons */
 import KeyboardBackspaceIcon from "@material-ui/icons/KeyboardBackspace";
 /* CustomIcons */
-import MiniBankIcon from "../../components/UI/miniBankIcon/MiniBankIcon";
+import BankIcon from "../../components/UI/bankIcon/BankIcon";
+import CardWithCoinsIcon from "../../components/UI/cardWithCoinsIcon/CardWithCoinsIcon";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -76,11 +77,13 @@ const AccCreator = () => {
       >
         <Grid item xs={6}>
           <Paper className={classes.paper}>
-            <MiniBankIcon style={{ fontSize: 59 }} />
+            <BankIcon style={{ fontSize: 59 }} />
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper className={classes.paper} />
+          <Paper className={classes.paper}>
+            <CardWithCoinsIcon style={{ fontSize: 59 }} />
+          </Paper>
         </Grid>
       </Grid>
     </Container>
