@@ -1,5 +1,5 @@
 /* React */
-import React from "react";
+import React, { useState, Fragment } from "react";
 /* React Router */
 import { useHistory } from "react-router-dom";
 /* Material Imports */
@@ -9,6 +9,7 @@ import Grid from "@material-ui/core/Grid";
 import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
 import IconButton from "@material-ui/core/IconButton";
+import TextField from "@material-ui/core/TextField";
 /* Icons */
 import KeyboardBackspaceIcon from "@material-ui/icons/KeyboardBackspace";
 /* CustomIcons */
@@ -39,6 +40,7 @@ const useStyles = makeStyles((theme) => ({
     borderWidth: "3px",
     borderStyle: "solid",
     "&:hover": {
+      cursor: "pointer",
       borderColor: theme.palette.primary.main,
       borderWidth: "3px",
       borderStyle: "solid",
@@ -55,11 +57,20 @@ const useStyles = makeStyles((theme) => ({
   headerTypography: {
     marginLeft: theme.spacing(1),
   },
+  form: {
+    marginTop: theme.spacing(3),
+  },
+  textField: {
+    margin: theme.spacing(1, 0),
+    width: "100%",
+  },
 }));
 
 const AccCreator = () => {
   const classes = useStyles();
   const history = useHistory();
+
+  const [linkType, setLinkType] = useState(null);
 
   return (
     <Container className={classes.root}>
@@ -89,18 +100,59 @@ const AccCreator = () => {
         spacing={3}
       >
         <Grid item xs={6}>
-          <Paper className={classes.paper}>
+          <Paper className={classes.paper} onClick={() => setLinkType("bank")}>
             <BankIcon style={{ fontSize: 59 }} />
             Bank Link
           </Paper>
         </Grid>
         <Grid item xs={6}>
-          <Paper className={classes.paper}>
+          <Paper
+            className={classes.paper}
+            onClick={() => setLinkType("manual")}
+          >
             <CardWithCoinsIcon style={{ fontSize: 59 }} />
             Manual Account
           </Paper>
         </Grid>
       </Grid>
+
+      {!linkType ? null : (
+        <form className={classes.form} noValidate autoComplete="off">
+          {linkType === "manual" ? (
+            <TextField
+              className={classes.textField}
+              id="name"
+              type="text"
+              label="Budget Name"
+              helperText="Must enter a name for this budget."
+            />
+          ) : (
+            <Fragment>
+              <TextField
+                className={classes.textField}
+                id="username"
+                type="text"
+                label="Username/ID"
+                helperText="Bank User/ID requiered for bank connection"
+              />
+              <TextField
+                className={classes.textField}
+                id="password"
+                type="password"
+                label="Password"
+                helperText="Bank password requiered for bank connection"
+              />
+            </Fragment>
+          )}
+          <TextField
+            className={classes.textField}
+            id="budget"
+            type="number"
+            label="Enter Budget"
+            helperText="Must enter your budgets amount."
+          />
+        </form>
+      )}
     </Container>
   );
 };
