@@ -10,6 +10,7 @@ import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
 import IconButton from "@material-ui/core/IconButton";
 import TextField from "@material-ui/core/TextField";
+import MenuItem from "@material-ui/core/MenuItem";
 /* Icons */
 import KeyboardBackspaceIcon from "@material-ui/icons/KeyboardBackspace";
 /* CustomIcons */
@@ -66,11 +67,21 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const banks = [
+  { name: "Davivienda", key: "davi" },
+  { name: "Bancolombia", key: "bcol" },
+];
+
 const AccCreator = () => {
   const classes = useStyles();
   const history = useHistory();
 
   const [linkType, setLinkType] = useState(null);
+  const [bankCode, setBankCode] = useState("");
+
+  const handleBankChange = (event) => {
+    setBankCode(event.target.value);
+  };
 
   return (
     <Container className={classes.root}>
@@ -128,6 +139,21 @@ const AccCreator = () => {
             />
           ) : (
             <Fragment>
+              <TextField
+                className={classes.textField}
+                id="selected-bank"
+                select
+                label="Select"
+                value={bankCode}
+                onChange={handleBankChange}
+                helperText="Please select your bank"
+              >
+                {banks.map((option) => (
+                  <MenuItem key={option.key} value={option.key}>
+                    {option.name}
+                  </MenuItem>
+                ))}
+              </TextField>
               <TextField
                 className={classes.textField}
                 id="username"
